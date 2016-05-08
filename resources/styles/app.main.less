@@ -1,0 +1,79 @@
+@import 'normalize.css';
+@import 'type';
+@import "colors";
+@import "nav";
+
+/* Crossword */
+
+#crossword-table {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+}
+
+#crossword-table .row {
+    display: flex;
+    justify-content: center;
+}
+
+#crossword-table .cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    position: relative;
+    cursor: pointer;
+    border: 1px solid #2f302f;
+}
+
+@media only screen
+and (min-device-width : 375px)
+and (max-device-width : 667px)
+and (orientation : portrait) {
+    #crossword-table .cell {
+        height: 24px;
+    }
+}
+
+#crossword-table .cell--empty {
+    background-color: #444f44;
+    pointer-events: none;
+    cursor: default;
+}
+
+#crossword-table span.clue-number {
+    position: absolute;
+    font-size: 0.6em;
+    color: rgba(0,0,0,0.7);
+    top: 2px;
+    left: 2px;
+}
+
+@media only screen
+and (min-device-width : 375px)
+and (max-device-width : 667px)
+and (orientation : portrait) {
+    #crossword-table span.clue-number {
+        font-size: 0.5em;
+    }
+}
+
+#crossword-table .active {
+    background: #bce8f1;
+}
+
+#crossword-table .selected {
+    background: #68CDFF;
+}
+
+.clue {
+    display: flex;
+    justify-content: center;
+    padding: 20px 0;
+    p {
+        font-size: 12px;
+        width: 400px;
+    }
+}
+
