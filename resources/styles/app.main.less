@@ -18,26 +18,18 @@
 
 #crossword-table .cell {
     display: flex;
+    text-transform: uppercase;
     align-items: center;
     justify-content: center;
     width: 30px;
     height: 30px;
     position: relative;
     cursor: pointer;
-    border: 1px solid #2f302f;
-}
-
-@media only screen
-and (min-device-width : 375px)
-and (max-device-width : 667px)
-and (orientation : portrait) {
-    #crossword-table .cell {
-        height: 24px;
-    }
+    border: 1px solid #000;
 }
 
 #crossword-table .cell--empty {
-    background-color: #444f44;
+    background-color: #000;
     pointer-events: none;
     cursor: default;
 }
