@@ -6,3 +6,11 @@
   :current-page
   (fn [db] (reaction (:current-page @db))))
 
+(register-sub
+  :puzzle
+  (fn [db] (reaction (:puzzle @db))))
+
+(register-sub
+  :game-state
+  (fn [db] (reaction (:game-state @db))))
+

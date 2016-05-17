@@ -5,12 +5,12 @@
     <!--<meta name="viewport" content="width=device-width, initial-scale=1">-->
     <link rel="stylesheet" href="https://cdn.rawgit.com/mblode/marx/master/css/marx.min.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css">
-    <link rel="stylesheet" href="styles/app.css">
+    <link rel="stylesheet" href="/styles/app.css">
     <title>Crossed</title>
   </head>
   <body>
     <div id="app"></div>
-    <script type="text/javascript" src="scripts/app.js"></script>
+    <script type="text/javascript" src="/scripts/app.js"></script>
     <script type="text/javascript">
       document.onkeydown = function(e) {stopDefaultBackspaceBehaviour(e);}
       document.onkeypress = function(e) {stopDefaultBackspaceBehaviour(e);}
@@ -21,7 +21,7 @@
               var elements = "HTML, BODY, TABLE, TBODY, TR, TD, DIV";
               var d = event.srcElement || event.target;
               var regex = new RegExp(d.tagName.toUpperCase());
-              if (d.contentEditable != 'true') { //it's not REALLY true, checking the boolean value (!== true) always passes, so we can use != 'true' rather than !== true/
+              if (d.contentEditable != 'true') {
                   if (regex.test(elements)) {
                       event.preventDefault ? event.preventDefault() : event.returnValue = false;
                   }

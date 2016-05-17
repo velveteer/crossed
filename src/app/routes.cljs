@@ -4,16 +4,25 @@
             [re-frame.core :as re-frame]))
 
 (def routes ["/" {""      :home
-                  "about" :about}])
+                  ["game/" [keyword :game-id]] :game}])
 
 (defn- parse-url [url]
   (bidi/match-route routes url))
 
-(defn- dispatch-route [matched-route]
-  (let [page (keyword (name (:handler matched-route)))]
-    (re-frame/dispatch [:current-page page])))
+(defn- dispatch-route [match]
+  (case (:handler match)
+    :home (re-frame/dispatch [:current-page :home])
+    :game (do 
+              (re-frame/dispatch [:current-page :game])
+              (re-frame/dispatch [:join-game (-> match :route-params :game-id)]))))
+
+(def history (pushy/pushy dispatch-route (partial bidi/match-route routes)))
 
 (defn start! []
-  (pushy/start! (pushy/pushy dispatch-route parse-url)))
+  (pushy/start! history))
 
-(def url-for (partial bidi/path-for routes))
+(defn set-token! [token]
+  (pushy/set-token! history token))
+
+(defn path-for [tag & args]
+  (apply bidi/path-for routes tag args))

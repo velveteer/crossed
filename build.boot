@@ -17,7 +17,8 @@
                  [reagent                       "0.6.0-alpha"]
                  [re-frame                      "0.7.0"]
                  [bidi                          "2.0.8"]
-                 [kibu/pushy                    "0.3.6"]])
+                 [kibu/pushy                    "0.3.6"]
+                 [matchbox                      "0.0.8-SNAPSHOT"]])
 (require
  '[adzerk.boot-cljs             :refer [cljs]]
  '[adzerk.boot-cljs-repl        :refer [cljs-repl]]
@@ -27,9 +28,9 @@
  '[deraen.boot-less             :refer [less]])
 
 (deftask dev []
-  (comp (serve :dir "target" :not-found 'dev.not-found/not-found-handler :port 8080)
+  (comp (serve :port 8080 :dir "target" :not-found 'dev.not-found/not-found-handler :reload true)
         (watch)
-        (reload :on-jsload 'app.core/mount-root)
+        (reload :on-jsload 'app.core/mount-root :ws-host "166.78.47.104" :port 34769)
         (speak)
         (cljs-repl)
         (cljs :optimizations :none :source-map true)
