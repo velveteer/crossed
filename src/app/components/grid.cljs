@@ -25,6 +25,7 @@
 (defonce puzzle-atom (r/atom {}))
 (defonce cursor-atom (r/atom (build-cursor nil true)))
 (defonce game-state-atom (r/atom {}))
+(defonce cell-position-atom (r/atom {}))
 
 (defn get-clue-id [clue]
   (str (:number clue) "-" (if (:across? clue) "across" "down")))
@@ -86,7 +87,12 @@
         old-across? (:across? old-cursor)
         flipped-across? (if same-location (not old-across?) old-across?)
         new-across? (if (direction-allowed? (build-cursor square flipped-across?) clues)
-                      flipped-across? (not flipped-across?))]
+                      flipped-across? (not flipped-across?))
+        cell (.getBoundingClientRect (.getElementById js/document (str (:col square) (:row square))))]
+    (reset! cell-position-atom {:top (aget cell "top") 
+                                :right (aget cell "right")
+                                :left (aget cell "left")
+                                :bottom (aget cell "bottom")})
     (focus-input)
     (reset! cursor-atom (build-cursor square new-across?))))
 
@@ -164,10 +170,15 @@
          (for [[idx cell] (map-indexed vector cells)]
            ^{:key idx} [crossword-table-cell idx row-idx cell])]))
     (let [rows (->> (range 0 grid-size)
-                    (map #(get grid (keyword (str %)))))]
+                    (map #(get grid (keyword (str %)))))
+          cell-position @cell-position-atom]
       [:div
        [:input {:id "word-input"
-                :style {:z-index "-9999" :position "absolute" :top "50%" :left "50%" :border "none" :outline "none" :width 1 :height 1}
+                :style {:z-index "-9999" 
+                        :position "absolute" 
+                        :top (:top cell-position) :left (:left cell-position) :right (:left cell-position) :bottom (:bottom cell-position)
+                        :border "none" :outline "none" 
+                        :width 1 :height 1}
                 :value (user-input cursor clues game-state)
                 :on-change handle-change}]
        [:div#crossword-table
