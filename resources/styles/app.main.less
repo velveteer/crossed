@@ -1,15 +1,14 @@
-@import 'normalize.css';
-@import 'type';
 @import "colors";
-@import "nav";
+
+h1.home {
+    margin: 0 auto;
+}
+
+body {
+    overflow-y: scroll;
+}
 
 /* Crossword */
-
-#crossword-table {
-    display: flex;
-    width: 100%;
-    flex-direction: column;
-}
 
 #crossword-table .row {
     display: flex;
@@ -17,12 +16,11 @@
 }
 
 #crossword-table .cell {
-    display: flex;
     text-transform: uppercase;
-    align-items: center;
-    justify-content: center;
+    text-align: center;
     width: 30px;
     height: 30px;
+    line-height: 30px;
     position: relative;
     cursor: pointer;
     border: 1px solid #000;
@@ -36,7 +34,8 @@
 
 #crossword-table span.clue-number {
     position: absolute;
-    font-size: 0.6em;
+    font-size: 0.5em;
+    line-height: 1em;
     color: rgba(0,0,0,0.7);
     top: 2px;
     left: 2px;
@@ -60,11 +59,7 @@ and (orientation : portrait) {
 }
 
 .clue {
-    display: flex;
-    justify-content: center;
-    padding: 20px 0;
-    p {
-        font-size: 24px;
-    }
+    height: 50px;
+    line-height: 50px;
+    text-align: center;
 }
-

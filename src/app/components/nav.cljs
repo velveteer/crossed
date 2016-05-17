@@ -3,10 +3,9 @@
 
 (defn main []
   (fn []
-    [:div.nav
-     [:ul
-      [:li
-       [:a {:href (routes/path-for :home)} [:i.fa.fa-home] "Home"]]
-      [:li
-       [:a {:href (routes/path-for :game :game-id :test)} [:i.fa.fa-home] "Test Game"]]
-      ]]))
+    [:nav.pa3.pa4-ns.pb0-ns
+     [:a.link.dim.black.b.f1.f-headline-ns.tc.db.mb3.mb4-ns {:href (routes/path-for :home)} "Crossed"]
+     [:div.tc.pb3
+        [:a.link.dim.gray.f6.f5-ns.dib.mr3 {:href (routes/path-for :home)} [:i.fa.fa-home.mr1] "Home"]
+        [:a.link.dim.gray.f6.f5-ns.dib.mr3 {:href (routes/path-for :game :game-id :test)} [:i.fa.fa-at.mr1]  "Test Game"]
+    ]]))

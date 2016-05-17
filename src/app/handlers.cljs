@@ -29,7 +29,10 @@
 (register-handler
   :game-state-update
   (fn [db [_ v]]
-    (assoc db :game-state v)))
+    (if (seq v)
+      (assoc db :game-state v)
+      (assoc db :game-state {})
+      )))
 
 (register-handler
   :join-game
@@ -39,7 +42,7 @@
       (-> fb-root
           (m/get-in [id :game-state])
           (m/listen-to :value
-                       (fn [[_ v]] (.log js/console v) (dispatch [:game-state-update v])))))
+                       (fn [[_ v]] (println v) (dispatch [:game-state-update v])))))
 
     ;; update current game id
     (assoc db :current-game game-id)))
@@ -47,5 +50,5 @@
 (register-handler
   :send-move
   (fn [db [_ [square letter]]]
-    (m/merge-in! fb-root [(:current-game db) :game-state] {(str (:col square) (:row square)) letter})
+    (m/merge-in! fb-root [(:current-game db) :game-state] {(str "c" (:col square) "r" (:row square)) letter})
     db))
