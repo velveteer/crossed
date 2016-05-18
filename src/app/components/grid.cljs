@@ -212,7 +212,7 @@
         id (get-clue-id clue)]
     (if clue
         [:div.clue [:p {:id id} (str clue-number ". " clue-text)]]
-        [:div [:p " "]])))
+        [:div.clue [:p " "]])))
 
 (defn crossword-player [puzzle-atom-input]
   (let [puzzle @puzzle-atom-input
