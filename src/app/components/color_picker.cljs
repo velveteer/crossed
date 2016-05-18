@@ -7,7 +7,7 @@
 (defn color-select []
     (let [user (subscribe [:user])]
         (fn [] 
-            [:div.tc.pa4
+            [:div.tc.pt1
              [:select.pa1 {:value (:color-scheme @user) :on-change (fn [ev] (dispatch [:set-colors (.. ev -target -value)]))}
               (for [[k v] c/colors] ^{:key k} [:option {:value k} (name k)])
               ]])))

@@ -162,8 +162,6 @@
         (if (not (square-correct? (:square cursor) clues @game-state))
           (dispatch [:send-move [cur-square nil nil]]))))))
       
- #_(word-correct? (selected-word @cursor-atom clues) @game-state)
- 
 (defn crossword-table [puzzle cursor game-state]
   (let [grid (:grid puzzle)
         clues (:clues puzzle)
@@ -232,6 +230,7 @@
             ^{:key user} [:p.f5 (str (:id user) " " (:color-scheme user))])]
         [crossword-clue puzzle cursor]
         [crossword-table puzzle cursor @game-state]
+        [crossword-clue puzzle cursor]
         [cp/main]
        ])))
 
