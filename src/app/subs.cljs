@@ -14,3 +14,11 @@
   :game-state
   (fn [db] (reaction (:game-state @db))))
 
+(register-sub
+  :user
+  (fn [db] (reaction (:user @db))))
+
+(register-sub
+  :user-list
+  (fn [db] (reaction (:user-list @db))))
+

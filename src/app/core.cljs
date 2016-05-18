@@ -14,7 +14,6 @@
   (render [views/main] (.getElementById js/document "app")))
 
 (defn ^:export init []
-  (enable-console-print!)
   (if ^boolean goog.DEBUG (devtools/install! [:custom-formatters :sanity-hints]))
   (routes/start!)
   (dispatch-sync [:initialize-db])
