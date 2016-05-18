@@ -8,6 +8,18 @@ body {
     overflow-y: scroll;
 }
 
+@keyframes shrink {
+    100% {
+        font-size: 2em;
+    }
+    50% {
+        font-size: 1.4em;
+    }
+    0% {
+        font-size: 1em;
+    }
+}
+
 /* Crossword */
 
 #crossword-table .row {
@@ -16,7 +28,7 @@ body {
 }
 
 #crossword-table .cell {
-    transition: background-color 1s, color 2s;
+    transition: background-color 1s, color 2s, opacity 2s;
     text-transform: uppercase;
     text-align: center;
     width: 35px;
@@ -62,6 +74,13 @@ and (orientation : portrait) {
     color: #000000 !important;
     color: #000000 !important;
     background-color: rgba(8, 220, 172, 0.8) !important;
+}
+#crossword-table .correct {
+    transition: background-color 1s, color 2s, opacity 2s;
+    cursor: disabled;
+    pointer-events: none;
+    font-style: italic;
+    opacity: 0.7;
 }
 
 .clue {
