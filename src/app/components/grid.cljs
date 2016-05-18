@@ -151,11 +151,11 @@
         word (.. e -target -value)
         cur-square (:square cursor)]
     (.preventDefault e)
-    (get-styles (get-theme (:id @current-user)))
     (if (> (count word) (count prev-word))
-      (do 
-        (swap! cursor-atom next-cursor puzzle)
-        (dispatch [:send-move [cur-square (last word) @current-user]]))
+      (if (re-matches #"^[A-z]+$" (join "" (last word)))
+        (do 
+          (swap! cursor-atom next-cursor puzzle)
+          (dispatch [:send-move [cur-square (last word) @current-user]])))
       (do 
         (swap! cursor-atom prev-cursor puzzle)
         (dispatch [:send-move [cur-square nil nil]])))))
