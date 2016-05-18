@@ -18,9 +18,9 @@ body {
 #crossword-table .cell {
     text-transform: uppercase;
     text-align: center;
-    width: 30px;
-    height: 30px;
-    line-height: 30px;
+    width: 35px;
+    height: 35px;
+    line-height: 35px;
     position: relative;
     cursor: pointer;
     border: 1px solid #000;
@@ -34,7 +34,7 @@ body {
 
 #crossword-table span.clue-number {
     position: absolute;
-    font-size: 0.5em;
+    font-size: 0.6em;
     line-height: 1em;
     color: rgba(0,0,0,0.7);
     top: 2px;
@@ -51,11 +51,16 @@ and (orientation : portrait) {
 }
 
 #crossword-table .active {
-    box-shadow: inner 1px 2px red;
+    font-weight: bold;
+    color: #000000 !important;
+    background-color: rgba(8, 255, 172, 0.3) !important;
 }
 
 #crossword-table .selected {
-    border: 2px solid red;
+    font-weight: bold;
+    color: #000000 !important;
+    color: #000000 !important;
+    background-color: rgba(8, 220, 172, 0.8) !important;
 }
 
 .clue {
