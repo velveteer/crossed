@@ -8,4 +8,3 @@
     (let [col (last (str/split square "c"))
           row (last (str/split square "r"))]
       {:col col :row row}))
-

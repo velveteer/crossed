@@ -3,6 +3,7 @@
   (:require [re-frame.core :refer [register-handler dispatch dispatch-sync]]
             [clojure.string :as str]
             [matchbox.core :as m]
+            [ajax.core :refer [GET]]
             [app.colors :as c]
             [app.util :refer [marshal-square]]
             [app.db :as db]))
@@ -47,6 +48,14 @@
       (merge db {:user-list v})
       (assoc db :user-list {}))))
 
+(register-handler
+  :generate-game
+  (fn [db [_ _]]
+    (GET "get-puzzle"
+      {:response-format :json
+        :keywords? true
+        :handler #(log %)})))
+      
 (register-handler
   :join-game
   (fn [db [_ game-id]]

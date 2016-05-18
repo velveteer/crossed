@@ -12,7 +12,20 @@
                  [weasel                        "0.7.0"           :scope "test"]
                  [org.clojure/tools.nrepl       "0.2.12"          :scope "test"]
                  [deraen/boot-less              "0.2.1"           :scope "test"]
+                 
+                  ; Clojure
+                 [org.clojure/clojure           "1.7.0"]
+                 [hiccup                        "1.0.5"]
+                 [environ                       "1.0.0"]
+                 [compojure                     "1.1.5"]
+                 [ring/ring-core                "1.4.0"]
+                 [metosin/ring-http-response    "0.6.5"]
+                 [org.clojure/data.json         "0.2.6"]
+                 [http-kit                      "2.1.18"]
+                 
+                 ; Clojurescript
                  [org.clojure/clojurescript     "1.7.228"]
+                 [cljs-ajax                     "0.5.4"]
                  [binaryage/devtools            "0.6.1"]
                  [reagent                       "0.6.0-alpha"]
                  [re-frame                      "0.7.0"]
@@ -24,15 +37,19 @@
  '[adzerk.boot-cljs-repl        :refer [cljs-repl]]
  '[adzerk.boot-reload           :refer [reload]]
  '[pandeiro.boot-http           :refer [serve]]
+ '[environ.core                 :refer [env]]
  '[crisptrutski.boot-cljs-test  :refer [test-cljs]]
  '[deraen.boot-less             :refer [less]])
 
+(task-options!
+  serve {:httpkit true
+         :handler 'app.server.core/app
+         :port (Integer/parseInt (:port env "8080"))})
+
 (deftask dev []
-  (comp (serve :port 8080 :dir "target" :not-found 'dev.not-found/not-found-handler :reload true)
+  (comp (serve :reload true)
         (watch)
         (reload :on-jsload 'app.core/mount-root :ws-host "166.78.47.104" :port 34769)
-        (speak)
-        (cljs-repl)
         (cljs :optimizations :none :source-map true)
         (less)
         (target :dir #{"target"})))
