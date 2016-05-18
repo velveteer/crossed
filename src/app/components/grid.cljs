@@ -69,7 +69,6 @@
 (defn word-correct? [clue game-state]
   (let [squares (squares-in-word clue)
         squares-with-correct-letters (map vector squares (:answer clue))]
-    #_(doseq [[square letter] squares-with-correct-letters] (log (= (lower-case letter) (get-in game-state [(keyword (u/marshal-square square)) :letter]))))
     (every? (fn [[square correct-letter]] (= (get-in game-state [(keyword (u/marshal-square square)) :letter]) (lower-case correct-letter)))
             squares-with-correct-letters)))
 
@@ -156,11 +155,15 @@
       (if (re-matches #"^[A-z]+$" (join "" (last word)))
         (do 
           (swap! cursor-atom next-cursor puzzle)
-          (dispatch [:send-move [cur-square (last word) @current-user]])))
+          (if (not (square-correct? (:square cursor) clues @game-state))
+            (dispatch [:send-move [cur-square (last word) @current-user]]))))
       (do 
         (swap! cursor-atom prev-cursor puzzle)
-        (dispatch [:send-move [cur-square nil nil]])))))
+        (if (not (square-correct? (:square cursor) clues @game-state))
+          (dispatch [:send-move [cur-square nil nil]]))))))
       
+ #_(word-correct? (selected-word @cursor-atom clues) @game-state)
+ 
 (defn crossword-table [puzzle cursor game-state]
   (let [grid (:grid puzzle)
         clues (:clues puzzle)
