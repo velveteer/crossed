@@ -9,6 +9,8 @@
             [app.util :refer [marshal-square]]
             [app.db :as db]))
   
+(defn convert-puzzle [puzzle] (-> (->> puzzle (.parse js/JSON)) (js->clj :keywordize-keys true)))
+
 (def firebase-io-root "https://scorching-torch-2540.firebaseio.com/")
 
 ;; Connection to Firebase
@@ -54,7 +56,7 @@
   (fn [db [_ game-id]]
     (GET (str "get-puzzle/" game-id)
       {:response-format :json
-        :keywords? true
+        :keywords? false
         :handler #(dispatch [:update-and-set-puzzle [% game-id]])})
     (assoc db :loading? true)))
       
@@ -63,10 +65,11 @@
   (fn [db [_ [puzzle game-id]]]
     (log "UPDATE" puzzle)
     (def puz (m/get-in fb-root [game-id :puzzle]))
-    (m/reset! puz puzzle)
+    ; Try this shit out
+    ; SERIALIZATION MOTHERFUCKER
+    (m/reset! puz (.stringify js/JSON (clj->js puzzle)))
     (m/deref puz (fn [value] 
-                     (log value)
-                     (dispatch [:set-puzzle value])))
+                     (dispatch [:set-puzzle (convert-puzzle value)])))
                    db))
   
 (register-handler
@@ -88,7 +91,7 @@
             (m/deref-in fb-root [id :puzzle] 
                         (fn [value] 
                             (if (seq value)
-                              (dispatch [:set-puzzle value])
+                              (dispatch [:set-puzzle (convert-puzzle value)])
                               (dispatch [:generate-game id]))))
             (m/merge-in! fb-root [id :users] {(:id user) user})
             (-> fb-root

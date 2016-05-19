@@ -14,7 +14,6 @@
   (case (:handler match)
     :home (re-frame/dispatch [:current-page :home])
     :game (do 
-              (log "HERE")
               (re-frame/dispatch [:current-page :game])
               (re-frame/dispatch [:join-game (-> match :route-params :game-id)]))))
 

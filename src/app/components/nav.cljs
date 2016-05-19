@@ -2,7 +2,7 @@
   (:require [app.routes :as routes]))
 
 (defn random-string [length]
-  (let [ascii-codes (concat (range 48 58) (range 66 91) (range 97 123))]
+  (let [ascii-codes (range 66 91)]
   (apply str (repeatedly length #(char (rand-nth ascii-codes))))))
 
 (defn main []

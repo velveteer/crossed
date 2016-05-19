@@ -7,8 +7,6 @@
             [app.colors :as c]
             [app.components.color-picker :as cp]))
 
-;(defn puz [puzzle] (-> (->> puzzle (.parse js/JSON)) (js->clj :keywordize-keys true)))
-
 (defn class-list [classes]
   (join " "
         (for [[class include?] classes
@@ -96,7 +94,7 @@
 (defn valid-cursor-position? [square grid]
   (let [row (:row square)
         col (:col square)
-        grid-keys [row col]]
+        grid-keys (map #(keyword (str %)) [row col])]
     (not (nil? (get-in grid grid-keys)))))
 
 (defn transform-cursor [col-transform row-transform cursor puzzle]
@@ -112,7 +110,6 @@
     (if (valid-cursor-position? new-square grid)
       (build-cursor new-square new-across?)
       (do
-        (log "BLURRRED")
         (blur-input)
         (build-cursor {:col -1 :row -1} false)))))
 
@@ -176,12 +173,12 @@
              [:span.clue-number number])])))
     (defn crossword-table-row [row-idx row]
       (let [cells (->> (range 0 grid-size)
-                       (map #(get row %)))]
+                       (map #(get row (keyword (str %)))))]
         [:div.row
          (for [[idx cell] (map-indexed vector cells)]
            ^{:key idx} [crossword-table-cell idx row-idx cell])]))
     (let [rows (->> (range 0 grid-size)
-                    (map #(get grid %)))
+                    (map #(get grid (keyword (str %)))))
           cell-position @cell-position-atom]
       [:div
        [:input {:id "word-input"
