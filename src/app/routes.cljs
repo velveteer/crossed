@@ -5,7 +5,7 @@
             [re-frame.core :as re-frame]))
 
 (def routes ["/" { "" :home
-                  ["game/" [keyword :game-id]] :game}])
+                  ["game/" [#"\d+" :game-id]] :game}])
 
 (defn- parse-url [url]
   (bidi/match-route routes url))

@@ -54,7 +54,7 @@
 (register-handler
   :generate-game
   (fn [db [_ game-id]]
-    (GET (str "get-puzzle/" game-id)
+    (GET (str "get-puzzle/" (name game-id))
       {:response-format :json
         :keywords? false
         :handler #(dispatch [:update-and-set-puzzle [% game-id]])})
