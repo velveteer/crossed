@@ -8,7 +8,7 @@
             [app.routes :refer [set-token!]]
             [app.util :refer [marshal-square]]
             [app.db :as db]))
-  
+
 (defn convert-puzzle [puzzle] (-> (->> puzzle (.parse js/JSON)) (js->clj :keywordize-keys true)))
 
 (def firebase-io-root "https://scorching-torch-2540.firebaseio.com/")
@@ -20,17 +20,17 @@
   :initialize-db
   (fn  [_ _]
     db/default-db))
-  
+
 (register-handler
   :current-page
   (fn [db [_ page]]
     (merge db {:current-page page})))
-  
+
 (register-handler
   :set-user
   (fn [db [_ id]]
     (assoc-in db [:user :id] id)))
-  
+
 (register-handler
   :set-colors
   (fn [db [_ color]]
@@ -43,7 +43,7 @@
     (if (seq v)
       (assoc db :game-state v)
       (assoc db :game-state {}))))
-    
+
 (register-handler
   :user-list-update
   (fn [db [_ v]]
@@ -54,30 +54,30 @@
 (register-handler
   :generate-game
   (fn [db [_ game-id]]
-    (GET (str "get-puzzle/" (name game-id))
+    (GET (str "/get-puzzle/" (name game-id))
       {:response-format :json
         :keywords? false
         :handler #(dispatch [:update-and-set-puzzle [% game-id]])})
     (assoc db :loading? true)))
-      
+
 (register-handler
   :update-and-set-puzzle
   (fn [db [_ [puzzle game-id]]]
-    (log "UPDATE" puzzle)
+    #_(log "UPDATE" puzzle)
     (def puz (m/get-in fb-root [game-id :puzzle]))
     ; Try this shit out
     ; SERIALIZATION MOTHERFUCKER
     (m/reset! puz (.stringify js/JSON (clj->js puzzle)))
-    (m/deref puz (fn [value] 
+    (m/deref puz (fn [value]
                      (dispatch [:set-puzzle (convert-puzzle value)])))
                    db))
-  
+
 (register-handler
   :set-puzzle
   (fn [db [_ puzzle]]
-    (log "SET" puzzle)
+    #_(log "SET" puzzle)
     (merge db {:puzzle puzzle :loading? false})))
-  
+
 (register-handler
   :join-game
   (fn [db [_ game-id]]
@@ -86,10 +86,10 @@
           user (:user db)]
       (if (seq (:id user))
         ;; if user has session then put them into user-list for game
-        (do 
+        (do
             ; check if puzzle exists, otherwise generate one
-            (m/deref-in fb-root [id :puzzle] 
-                        (fn [value] 
+            (m/deref-in fb-root [id :puzzle]
+                        (fn [value]
                             (if (seq value)
                               (dispatch [:set-puzzle (convert-puzzle value)])
                               (dispatch [:generate-game id]))))
@@ -102,9 +102,9 @@
                 (m/get-in [id :game-state])
                 (m/listen-to :value
                              (fn [[_ v]] #_(log v) (dispatch [:game-state-update v])))))
-                           
+
         ;; anonymous login for anyone without a session -- sets user and then loops back to join the game
-        (do 
+        (do
             (m/auth-anon fb-root (fn [err auth-data]
                                 (dispatch [:set-user (:uid auth-data)])
                                 (dispatch [:join-game game-id])))))

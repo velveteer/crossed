@@ -12,7 +12,7 @@
                  [weasel                        "0.7.0"           :scope "test"]
                  [org.clojure/tools.nrepl       "0.2.12"          :scope "test"]
                  [deraen/boot-less              "0.2.1"           :scope "test"]
-                 
+
                   ; Clojure
                  [org.clojure/clojure           "1.7.0"]
                  [hiccup                        "1.0.5"]
@@ -22,7 +22,7 @@
                  [metosin/ring-http-response    "0.6.5"]
                  [org.clojure/data.json         "0.2.6"]
                  [http-kit                      "2.1.18"]
-                 
+
                  ; Clojurescript
                  [org.clojure/clojurescript     "1.7.228"]
                  [cljs-ajax                     "0.5.4"]
@@ -41,31 +41,10 @@
  '[crisptrutski.boot-cljs-test  :refer [test-cljs]]
  '[deraen.boot-less             :refer [less]])
 
-(task-options!
-  pom {
-    ;; needed to write the pom.xml file.
-    :project (get-env :project)
-    :version (get-env :version)
-
-    ;; How to add in your project license
-    :license {"Eclipse Public License"
-              "http://www.eclipse.org/legal/epl-v10.html"}
-
-    ;; And url.
-    :url "https://juxt.pro/"}
-
- ;; beware the initial quote here too.
- ;; you could use :all true instead
- aot {:namespace '#{app.core}}
- jar {:main 'app.server.core}
- serve {:httpkit true
-         :handler 'app.server.core/app
-         :port (Integer/parseInt (:port env "8080"))})
-
 (deftask dev []
-  (comp (serve :reload true)
+  (comp (serve :reload true :port 8080 :handler 'app.server.core/app :httpkit true)
         (watch)
-        (reload :on-jsload 'app.core/mount-root :ws-host "166.78.47.104" :port 34769)
+        (reload :on-jsload 'app.core/mount-root)
         (cljs :optimizations :none :source-map true)
         (less)
         (target :dir #{"target"})))
@@ -73,9 +52,8 @@
 (deftask build-cljs []
   (comp
     (less :compression true)
-    (cljs :optimizations :advanced :compiler-options {:closure-defines {"goog.DEBUG" false}})
-    (target :dir #{"dist"})))
-  
+    (cljs :optimizations :advanced :compiler-options {:closure-defines {"goog.DEBUG" false}})))
+
 (deftask build []
   (comp
    (build-cljs)
@@ -83,7 +61,9 @@
    (pom :project 'crossed
         :version "1.0.0")
    (uber)
-   (jar :main 'app.server.core)))
+   (jar :file "crossed.jar" :main 'app.server.core)
+   (sift :include #{#"\.jar$"})
+   (target :dir #{"target"})))
 
 (deftask testing []
   (merge-env! :resource-paths #{"test/cljs"})

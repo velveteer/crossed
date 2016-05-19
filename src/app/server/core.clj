@@ -1,4 +1,5 @@
 (ns app.server.core
+  (:use [org.httpkit.server :only [run-server]])
   (:require [compojure.core :refer [GET defroutes]]
             [hiccup.core :refer [html]]
             [hiccup.page :refer [html5 include-js include-css]]
@@ -9,8 +10,9 @@
             [ring.util.http-response :refer [ok]]
             [environ.core :refer [env]]
             [clojure.data.json :as json]
-            [app.server.generator :refer [generate-crossword]]))
-          
+            [app.server.generator :refer [generate-crossword]])
+  (:gen-class))
+
 (def index-page
   (html
    (html5
@@ -19,7 +21,6 @@
      [:meta {:charset "utf-8"}]
      [:meta {:http-equiv "X-UA-Compatible" :content "IE=edge"}]
      [:meta {:name "viewport" :content "width=device-width, initial-scale=1.0"}]
-     [:base {:href "http://166.78.47.104:8080"}]
      (include-css "https://s3-us-west-1.amazonaws.com/tachyons-css/tachyons.min.css")
      (include-css "https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css")
      (include-css "/styles/app.css")]
@@ -28,7 +29,7 @@
      (include-js "/scripts/app.js")
      (include-js "/scripts/backspace.js")
      ])))
-   
+
 (defn json-response [data]
   {:body (json/write-str data)
    :status 200
@@ -51,3 +52,6 @@
 (def app (-> app-routes
              (wrap-keyword-params)
              (wrap-params)))
+
+(defn -main [& args]
+    (run-server app {:port 8080}))
