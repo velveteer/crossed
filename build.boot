@@ -42,7 +42,23 @@
  '[deraen.boot-less             :refer [less]])
 
 (task-options!
-  serve {:httpkit true
+  pom {
+    ;; needed to write the pom.xml file.
+    :project (get-env :project)
+    :version (get-env :version)
+
+    ;; How to add in your project license
+    :license {"Eclipse Public License"
+              "http://www.eclipse.org/legal/epl-v10.html"}
+
+    ;; And url.
+    :url "https://juxt.pro/"}
+
+ ;; beware the initial quote here too.
+ ;; you could use :all true instead
+ aot {:namespace '#{app.core}}
+ jar {:main 'app.server.core}
+ serve {:httpkit true
          :handler 'app.server.core/app
          :port (Integer/parseInt (:port env "8080"))})
 
@@ -54,11 +70,20 @@
         (less)
         (target :dir #{"target"})))
 
-(deftask build []
+(deftask build-cljs []
   (comp
     (less :compression true)
     (cljs :optimizations :advanced :compiler-options {:closure-defines {"goog.DEBUG" false}})
     (target :dir #{"dist"})))
+  
+(deftask build []
+  (comp
+   (build-cljs)
+   (aot :namespace '#{app.server.core})
+   (pom :project 'crossed
+        :version "1.0.0")
+   (uber)
+   (jar :main 'app.server.core)))
 
 (deftask testing []
   (merge-env! :resource-paths #{"test/cljs"})

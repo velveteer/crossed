@@ -84,10 +84,10 @@
     ;; listen to game state on firebase
     (let [id  (keyword game-id)
           user (:user db)]
-      ; check if puzzle exists, otherwise generate one
       (if (seq (:id user))
         ;; if user has session then put them into user-list for game
         (do 
+            ; check if puzzle exists, otherwise generate one
             (m/deref-in fb-root [id :puzzle] 
                         (fn [value] 
                             (if (seq value)

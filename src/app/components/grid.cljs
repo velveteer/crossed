@@ -70,7 +70,7 @@
   (every? #(word-correct? % game-state) (:clues puzzle)))
 
 (defn focus-input []
-    (->> 100 (js/setTimeout (fn [] (.focus (.getElementById js/document "word-input"))))))
+    (.focus (.getElementById js/document "word-input")))
 
 (defn blur-input []
   (let [input (.getElementById js/document "word-input")]
@@ -88,7 +88,7 @@
                                 :right (aget cell "right")
                                 :left (aget cell "left")
                                 :bottom (aget cell "bottom")})
-    (focus-input)
+    (->> 100 (js/setTimeout (fn [] (focus-input))))
     (reset! cursor-atom (build-cursor square new-across?))))
 
 (defn valid-cursor-position? [square grid]
