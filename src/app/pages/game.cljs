@@ -1,4 +1,4 @@
-(ns app.pages.home
+(ns app.pages.game
   [:require [app.components.grid :as grid]])
 
 (defn main []

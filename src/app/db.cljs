@@ -2,7 +2,8 @@
 
 (def default-db
   {:current-page nil
-   :puzzle nil
+   :puzzle nil 
+   :loading? nil
    :cursor nil
    :game-state {}
    :user-list {}

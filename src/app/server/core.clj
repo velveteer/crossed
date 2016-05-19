@@ -19,6 +19,7 @@
      [:meta {:charset "utf-8"}]
      [:meta {:http-equiv "X-UA-Compatible" :content "IE=edge"}]
      [:meta {:name "viewport" :content "width=device-width, initial-scale=1.0"}]
+     [:base {:href "http://166.78.47.104:8080"}]
      (include-css "https://s3-us-west-1.amazonaws.com/tachyons-css/tachyons.min.css")
      (include-css "https://maxcdn.bootstrapcdn.com/font-awesome/4.6.1/css/font-awesome.min.css")
      (include-css "/styles/app.css")]
@@ -28,11 +29,6 @@
      (include-js "/scripts/backspace.js")
      ])))
    
-(defn new-uuid 
-  "Retrieve a type 4 (pseudo randomly generated) UUID. The UUID is generated using a cryptographically strong pseudo random number generator." 
-  []
-  (str (java.util.UUID/randomUUID)))
-
 (defn json-response [data]
   {:body (json/write-str data)
    :status 200
@@ -44,8 +40,8 @@
   `(~method ~route ~params (json-response ~@body)))
 
 (defroutes app-routes
-  (r GET "/get-puzzle" []
-    (-> (generate-crossword (new-uuid))))
+  (r GET "/get-puzzle/:id" [id]
+    (-> (generate-crossword id)))
   (GET "/" []
     (-> (ok index-page) (content-type "text/html")))
   (resources "/")

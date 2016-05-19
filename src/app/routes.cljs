@@ -1,9 +1,10 @@
 (ns app.routes
+  (:require-macros [app.logging :refer [log]])
   (:require [bidi.bidi :as bidi]
             [pushy.core :as pushy]
             [re-frame.core :as re-frame]))
 
-(def routes ["/" {""      :home
+(def routes ["/" { "" :home
                   ["game/" [keyword :game-id]] :game}])
 
 (defn- parse-url [url]
@@ -12,8 +13,8 @@
 (defn- dispatch-route [match]
   (case (:handler match)
     :home (re-frame/dispatch [:current-page :home])
-    :new-game (re-frame/dispatch [:generate-game])
     :game (do 
+              (log "HERE")
               (re-frame/dispatch [:current-page :game])
               (re-frame/dispatch [:join-game (-> match :route-params :game-id)]))))
 

@@ -8,8 +8,8 @@
 (def ^:dynamic *random-clue-generator* (fn [] nil))
 (def grid-size 17)
 (def word-count 100)
-(def max-placement-checks 2000)
-(def start-word-min-length 5)
+(def max-placement-checks 1000)
+(def start-word-min-length 4)
 
 (defrecord Placement [clue answer start-row start-col across?])
 

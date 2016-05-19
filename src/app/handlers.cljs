@@ -5,6 +5,7 @@
             [matchbox.core :as m]
             [ajax.core :refer [GET]]
             [app.colors :as c]
+            [app.routes :refer [set-token!]]
             [app.util :refer [marshal-square]]
             [app.db :as db]))
   
@@ -50,21 +51,45 @@
 
 (register-handler
   :generate-game
-  (fn [db [_ _]]
-    (GET "get-puzzle"
+  (fn [db [_ game-id]]
+    (GET (str "get-puzzle/" game-id)
       {:response-format :json
         :keywords? true
-        :handler #(log %)})))
+        :handler #(dispatch [:update-and-set-puzzle [% game-id]])})
+    (assoc db :loading? true)))
       
+(register-handler
+  :update-and-set-puzzle
+  (fn [db [_ [puzzle game-id]]]
+    (log "UPDATE" puzzle)
+    (def puz (m/get-in fb-root [game-id :puzzle]))
+    (m/reset! puz puzzle)
+    (m/deref puz (fn [value] 
+                     (log value)
+                     (dispatch [:set-puzzle value])))
+                   db))
+  
+(register-handler
+  :set-puzzle
+  (fn [db [_ puzzle]]
+    (log "SET" puzzle)
+    (merge db {:puzzle puzzle :loading? false})))
+  
 (register-handler
   :join-game
   (fn [db [_ game-id]]
     ;; listen to game state on firebase
-    (let [id  (-> (name game-id) (str/lower-case) (keyword))
+    (let [id  (keyword game-id)
           user (:user db)]
+      ; check if puzzle exists, otherwise generate one
       (if (seq (:id user))
         ;; if user has session then put them into user-list for game
         (do 
+            (m/deref-in fb-root [id :puzzle] 
+                        (fn [value] 
+                            (if (seq value)
+                              (dispatch [:set-puzzle value])
+                              (dispatch [:generate-game id]))))
             (m/merge-in! fb-root [id :users] {(:id user) user})
             (-> fb-root
                 (m/get-in [id :users])
@@ -79,12 +104,12 @@
         (do 
             (m/auth-anon fb-root (fn [err auth-data]
                                 (dispatch [:set-user (:uid auth-data)])
-                                (dispatch [:join-game game-id])
+                                (dispatch [:join-game game-id])))))
                                 ;; remove user from this game's user-list on disconnect
-                                (.remove (m/on-disconnect (.child fb-root (str (name game-id) "/users/" (:uid auth-data)))))))))
+                                ;(.remove (m/on-disconnect (.child fb-root (str (name game-id) "/users/" (:uid auth-data)))))))))
 
     ;; update current game id
-    (assoc db :current-game game-id))))
+    (merge db {:current-game game-id}))))
 
 (register-handler
   :send-move

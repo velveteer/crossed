@@ -7,6 +7,10 @@
   (fn [db] (reaction (:current-page @db))))
 
 (register-sub
+  :loading?
+  (fn [db] (reaction (:loading? @db))))
+
+(register-sub
   :puzzle
   (fn [db] (reaction (:puzzle @db))))
 

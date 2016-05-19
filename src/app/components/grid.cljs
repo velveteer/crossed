@@ -7,7 +7,7 @@
             [app.colors :as c]
             [app.components.color-picker :as cp]))
 
-(defn puz [puzzle] (-> (->> puzzle (.parse js/JSON)) (js->clj :keywordize-keys true)))
+;(defn puz [puzzle] (-> (->> puzzle (.parse js/JSON)) (js->clj :keywordize-keys true)))
 
 (defn class-list [classes]
   (join " "
@@ -21,7 +21,6 @@
 (defn build-cursor [square across?]
   {:square square :across? across?})
 
-(defonce puzzle-atom (r/atom {}))
 (defonce cursor-atom (r/atom (build-cursor nil true)))
 (defonce cell-position-atom (r/atom {}))
 
@@ -97,7 +96,7 @@
 (defn valid-cursor-position? [square grid]
   (let [row (:row square)
         col (:col square)
-        grid-keys (map #(keyword (str %)) [row col])]
+        grid-keys [row col]]
     (not (nil? (get-in grid grid-keys)))))
 
 (defn transform-cursor [col-transform row-transform cursor puzzle]
@@ -113,6 +112,7 @@
     (if (valid-cursor-position? new-square grid)
       (build-cursor new-square new-across?)
       (do
+        (log "BLURRRED")
         (blur-input)
         (build-cursor {:col -1 :row -1} false)))))
 
@@ -136,7 +136,7 @@
     (get c/colors (keyword theme)))
 
 (defn handle-change [e]
-  (let [puzzle @puzzle-atom
+  (let [puzzle @(subscribe [:puzzle])
         game-state (subscribe [:game-state])
         current-user (subscribe [:user])
         cursor @cursor-atom
@@ -176,12 +176,12 @@
              [:span.clue-number number])])))
     (defn crossword-table-row [row-idx row]
       (let [cells (->> (range 0 grid-size)
-                       (map #(get row (keyword (str %)))))]
+                       (map #(get row %)))]
         [:div.row
          (for [[idx cell] (map-indexed vector cells)]
            ^{:key idx} [crossword-table-cell idx row-idx cell])]))
     (let [rows (->> (range 0 grid-size)
-                    (map #(get grid (keyword (str %)))))
+                    (map #(get grid %)))
           cell-position @cell-position-atom]
       [:div
        [:input {:id "word-input"
@@ -194,7 +194,7 @@
                 :value (user-input cursor clues game-state)
                 :on-change handle-change}]
        [:div#crossword-table
-         (if (puzzle-complete? puzzle game-state)
+         (if (and (not (nil? puzzle)) (puzzle-complete? puzzle game-state))
            [:h3.f2.tc.mt0 "Puzzle solved!"])
         (for [[idx row] (map-indexed vector rows)]
           ^{:key idx} [crossword-table-row idx row])]])))
@@ -212,21 +212,25 @@
 (defn crossword-player []
   (let [puzzle (subscribe [:puzzle])
         cursor @cursor-atom
+        loading? (subscribe [:loading?])
         game-state (subscribe [:game-state])
         user-list (subscribe [:user-list])]
-    (if (nil? puzzle)
-      [:p "Loading..."]
+    (if (and (not @loading?) (nil? @puzzle))
+      [:p.f3.tc "No puzzle here :("]
       [:div.crossword-player
         #_[:div.tc 
          [:h3 "Players: "]
          (for [user (vals @user-list)]
             ^{:key user} [:p.f5 (str (:id user) " " (:color-scheme user))])]
-        [crossword-clue puzzle cursor]
-        [crossword-table puzzle cursor @game-state]
-        [crossword-clue puzzle cursor]
-        [cp/main]
+        (if @loading? 
+          [:p.tc.f3 "Loading..."]
+          [:div
+            [crossword-clue @puzzle cursor]
+            [crossword-table @puzzle cursor @game-state]
+            [crossword-clue @puzzle cursor]
+            [cp/main]])
        ])))
 
 (defn main []
   (fn []
-    (crossword-player)))
+    [crossword-player]))
