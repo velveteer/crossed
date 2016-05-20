@@ -67,6 +67,7 @@
     (def puz (m/get-in fb-root [game-id :puzzle]))
     ; Try this shit out
     ; SERIALIZATION MOTHERFUCKER
+    ; sorry matchbox
     (m/reset! puz (.stringify js/JSON (clj->js puzzle)))
     (m/deref puz (fn [value]
                      (dispatch [:set-puzzle (convert-puzzle value)])))
@@ -112,7 +113,7 @@
                                 ;(.remove (m/on-disconnect (.child fb-root (str (name game-id) "/users/" (:uid auth-data)))))))))
 
     ;; update current game id
-    (merge db {:current-game game-id}))))
+    (merge db {:current-game game-id :loading? (nil? (:puzzle db))}))))
 
 (register-handler
   :send-move

@@ -44,7 +44,7 @@
 
 (defroutes app-routes
   (r GET "/get-puzzle/:id" [id]
-    (-> (generate-crossword id)))
+    (-> (generate-crossword id (str (rand-int 1000000)))))
   (GET "/" []
     (-> (ok index-page) (content-type "text/html")))
   (not-found (-> (ok index-page) (content-type "text/html"))))

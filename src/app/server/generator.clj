@@ -189,8 +189,8 @@
        (reduce #(merge-with merge %1 %2))))
 
 (defn generate-crossword
-  [id]
-  (binding [*random-clue-generator* (random-clue-generator id)]
+  [id seed]
+  (binding [*random-clue-generator* (random-clue-generator seed)]
     (let [[start-placements start-grid] (init-crossword)
           [placements grid] (build-crossword start-placements start-grid)
           start-cells (get-start-cells placements)

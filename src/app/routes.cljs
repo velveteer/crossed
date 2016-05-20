@@ -5,7 +5,7 @@
             [re-frame.core :as re-frame]))
 
 (def routes ["/" { "" :home
-                  ["game/" [#"\d+" :game-id]] :game}])
+                  ["game/" [keyword :game-id]] :game}])
 
 (defn- parse-url [url]
   (bidi/match-route routes url))
@@ -13,7 +13,7 @@
 (defn- dispatch-route [match]
   (case (:handler match)
     :home (re-frame/dispatch [:current-page :home])
-    :game (do 
+    :game (do
               (re-frame/dispatch [:current-page :game])
               (re-frame/dispatch [:join-game (-> match :route-params :game-id)]))))
 
