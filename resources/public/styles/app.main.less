@@ -69,3 +69,36 @@ and (orientation : portrait) {
     height: 30px;
     text-align: center;
 }
+
+/* General button style (reset) */
+.btn {
+    border: none;
+    border-radius: 5px;
+    font-family: inherit;
+    font-size: inherit;
+    cursor: pointer;
+    padding: 15px 50px;
+    display: inline-block;
+    margin: 15px 30px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 700;
+    outline: none;
+    position: relative;
+    background: #14C8CC;
+    color: #fff;
+    box-shadow: 0 6px #3D9799;
+    -webkit-transition: none;
+    -moz-transition: none;
+    transition: none;
+
+    &:hover {
+        box-shadow: 0 8px #3D9799;
+        top: -2px;
+    }
+
+    &:active {
+        box-shadow: 0 0 #3D9799;
+        top: 6px;
+    }
+}

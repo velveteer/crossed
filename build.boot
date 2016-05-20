@@ -48,14 +48,14 @@
         (reload :on-jsload 'app.core/mount-root :asset-path "public")
         (cljs :optimizations :none :source-map true)))
 
-(deftask build-frontend []
+(deftask build-cljs []
   (comp
     (less :compression true)
     (cljs :optimizations :advanced :compiler-options {:closure-defines {"goog.DEBUG" false}})))
 
-(deftask build []
+(deftask build-jar []
   (comp
-   (build-frontend)
+   (build-cljs)
    (aot :namespace '#{app.server.core})
    (pom :project 'crossed
         :version "1.0.0")
