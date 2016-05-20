@@ -44,8 +44,8 @@
   (comp
         (watch)
         (serve :reload true :port 8080 :handler 'app.server.core/app :httpkit true)
-        (reload :on-jsload 'app.core/mount-root)
         (less)
+        (reload :on-jsload 'app.core/mount-root :asset-path "public")
         (cljs :optimizations :none :source-map true)))
 
 (deftask build-frontend []
