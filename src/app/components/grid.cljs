@@ -49,7 +49,7 @@
   (->> (words-containing-square (:square cursor) clues)
        (filter #(= (:across? %) (:across? cursor)))
        (first)))
-     
+
 (defn user-input [cursor clues game-state]
   (map #(get game-state %) (squares-in-word (selected-word cursor clues))))
 
@@ -84,7 +84,7 @@
         new-across? (if (direction-allowed? (build-cursor square flipped-across?) clues)
                       flipped-across? (not flipped-across?))
         cell (.getBoundingClientRect (.getElementById js/document (str (:col square) (:row square))))]
-    (reset! cell-position-atom {:top (aget cell "top") 
+    (reset! cell-position-atom {:top (aget cell "top")
                                 :right (aget cell "right")
                                 :left (aget cell "left")
                                 :bottom (aget cell "bottom")})
@@ -128,7 +128,7 @@
 (defn get-theme [user-id]
   (let [ulist (subscribe [:user-list])]
        (get-in @ulist [(keyword user-id) :color-scheme])))
-     
+
 (defn get-styles [theme]
     (get c/colors (keyword theme)))
 
@@ -144,15 +144,15 @@
     (.preventDefault e)
     (if (> (count word) (count prev-word))
       (if (re-matches #"^[A-z]+$" (join "" (last word)))
-        (do 
+        (do
           (swap! cursor-atom next-cursor puzzle)
           (if (not (square-correct? (:square cursor) clues @game-state))
             (dispatch [:send-move [cur-square (last word) @current-user]]))))
-      (do 
+      (do
         (swap! cursor-atom prev-cursor puzzle)
         (if (not (square-correct? (:square cursor) clues @game-state))
           (dispatch [:send-move [cur-square nil nil]]))))))
-      
+
 (defn crossword-table [puzzle cursor game-state]
   (let [grid (:grid puzzle)
         clues (:clues puzzle)
@@ -182,10 +182,10 @@
           cell-position @cell-position-atom]
       [:div
        [:input {:id "word-input"
-                :style {:z-index "-9999" 
-                        :position "absolute" 
+                :style {:z-index "-9999"
+                        :position "absolute"
                         :top (+ (:top cell-position) js/window.scrollY) :left (+ (:left cell-position) js/window.scrollX)
-                        :border "none" :outline "none" 
+                        :border "none" :outline "none"
                         :color "transparent"
                         :width 1 :height 1}
                 :value (user-input cursor clues game-state)
@@ -212,21 +212,19 @@
         loading? (subscribe [:loading?])
         game-state (subscribe [:game-state])
         user-list (subscribe [:user-list])]
-    (if (and (not @loading?) (nil? @puzzle))
-      [:p.f3.tc "No puzzle here :("]
       [:div.crossword-player
-        #_[:div.tc 
+        #_[:div.tc
          [:h3 "Players: "]
          (for [user (vals @user-list)]
             ^{:key user} [:p.f5 (str (:id user) " " (:color-scheme user))])]
-        (if @loading? 
+        (if @loading?
           [:p.tc.f3 "Loading..."]
           [:div
             [crossword-clue @puzzle cursor]
             [crossword-table @puzzle cursor @game-state]
             [crossword-clue @puzzle cursor]
             [cp/main]])
-       ])))
+       ]))
 
 (defn main []
   (fn []

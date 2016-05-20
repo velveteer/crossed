@@ -3,10 +3,12 @@
   (:require [compojure.core :refer [GET defroutes]]
             [hiccup.core :refer [html]]
             [hiccup.page :refer [html5 include-js include-css]]
-            [compojure.route :refer [not-found resources files]]
+            [compojure.route :refer [not-found]]
             [ring.middleware.keyword-params :refer [wrap-keyword-params]]
             [ring.middleware.params :refer [wrap-params]]
-            [ring.util.response :refer [response content-type file-response]]
+            [ring.middleware.resource :refer [wrap-resource]]
+            [ring.middleware.content-type :refer [wrap-content-type]]
+            [ring.util.response :refer [response content-type]]
             [ring.util.http-response :refer [ok]]
             [environ.core :refer [env]]
             [clojure.data.json :as json]
@@ -45,13 +47,14 @@
     (-> (generate-crossword id)))
   (GET "/" []
     (-> (ok index-page) (content-type "text/html")))
-  (resources "/")
-  (files "/" {:root "target"})
   (not-found (-> (ok index-page) (content-type "text/html"))))
 
 (def app (-> app-routes
+             (wrap-resource "public")
+             (wrap-content-type)
              (wrap-keyword-params)
              (wrap-params)))
 
 (defn -main [& args]
-    (run-server app {:port 8080}))
+  (let [port (Integer/parseInt (or (env :port) 8080))]
+    (run-server app {:port port})))

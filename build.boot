@@ -37,33 +37,32 @@
  '[adzerk.boot-cljs-repl        :refer [cljs-repl]]
  '[adzerk.boot-reload           :refer [reload]]
  '[pandeiro.boot-http           :refer [serve]]
- '[environ.core                 :refer [env]]
  '[crisptrutski.boot-cljs-test  :refer [test-cljs]]
  '[deraen.boot-less             :refer [less]])
 
 (deftask dev []
-  (comp (serve :reload true :port 8080 :handler 'app.server.core/app :httpkit true)
+  (comp
         (watch)
+        (serve :reload true :port 8080 :handler 'app.server.core/app :httpkit true)
         (reload :on-jsload 'app.core/mount-root)
-        (cljs :optimizations :none :source-map true)
         (less)
-        (target :dir #{"target"})))
+        (cljs :optimizations :none :source-map true)))
 
-(deftask build-cljs []
+(deftask build-frontend []
   (comp
     (less :compression true)
     (cljs :optimizations :advanced :compiler-options {:closure-defines {"goog.DEBUG" false}})))
 
 (deftask build []
   (comp
-   (build-cljs)
+   (build-frontend)
    (aot :namespace '#{app.server.core})
    (pom :project 'crossed
         :version "1.0.0")
    (uber)
    (jar :file "crossed.jar" :main 'app.server.core)
    (sift :include #{#"\.jar$"})
-   (target :dir #{"target"})))
+   (target)))
 
 (deftask testing []
   (merge-env! :resource-paths #{"test/cljs"})
