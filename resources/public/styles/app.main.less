@@ -1,7 +1,19 @@
 @import "colors";
+@import "spinner";
+@import url("https://fonts.googleapis.com/css?family=Monofett");
 
 body {
     overflow-y: scroll;
+}
+
+.header {
+    background: url("/images/pinkx.png") center center no-repeat;
+    height: 200px;
+    line-height: 200px;
+    background-size: 200px;
+    font-family: 'Monofett', cursive;
+    text-transform: uppercase;
+    letter-spacing: -3px;
 }
 
 /* Crossword */
@@ -101,4 +113,26 @@ and (orientation : portrait) {
         box-shadow: 0 0 #3D9799;
         top: 6px;
     }
+}
+
+.btn--green {
+    background: #10CC54;
+    box-shadow: 0 6px #3D995B;
+    color: #fff;
+    &:hover {
+        box-shadow: 0 8px #3D995B;
+        top: -2px;
+    }
+
+    &:active {
+        box-shadow: 0 0 #3D995B;
+        top: 6px;
+    }
+}
+
+.btn[disabled] {
+    pointer-events: none;
+    background: rgba(0,0,0,0.5);
+    color: rgba(255,255,255,0.5);
+    box-shadow: 0 6px rgba(0,0,0,0.6);
 }

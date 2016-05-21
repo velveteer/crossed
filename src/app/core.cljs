@@ -17,4 +17,5 @@
   (if ^boolean goog.DEBUG (devtools/install! [:custom-formatters :sanity-hints]))
   (routes/start!)
   (dispatch-sync [:initialize-db])
+  (dispatch-sync [:get-current-games])
   (mount-root))

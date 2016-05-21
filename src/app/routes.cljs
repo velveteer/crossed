@@ -12,7 +12,9 @@
 
 (defn- dispatch-route [match]
   (case (:handler match)
-    :home (re-frame/dispatch [:current-page :home])
+    :home (do
+            (re-frame/dispatch [:current-page :home])
+            (re-frame/dispatch [:leave-game]))
     :game (do
               (re-frame/dispatch [:current-page :game])
               (re-frame/dispatch [:join-game (-> match :route-params :game-id)]))))

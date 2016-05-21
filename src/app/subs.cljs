@@ -1,5 +1,6 @@
 (ns app.subs
-    (:require-macros [reagent.ratom :refer [reaction]])
+    (:require-macros [reagent.ratom :refer [reaction]]
+                     [app.logging :refer [log]])
     (:require [re-frame.core :refer [register-sub]]))
 
 (register-sub
@@ -26,3 +27,10 @@
   :user-list
   (fn [db] (reaction (:user-list @db))))
 
+(register-sub
+  :current-game
+  (fn [db] (reaction (:current-game @db))))
+
+(register-sub
+  :current-games
+  (fn [db] (reaction (:current-games @db))))

@@ -218,7 +218,7 @@
          (for [user (vals @user-list)]
             ^{:key user} [:p.f5 (str (:id user) " " (:color-scheme user))])]
         (if @loading?
-          [:p.tc.f3 "Loading..."]
+          [:div.spinner]
           [:div
             [crossword-clue @puzzle cursor]
             [crossword-table @puzzle cursor @game-state]

@@ -54,24 +54,27 @@
 (register-handler
   :generate-game
   (fn [db [_ game-id]]
+    #_(let [puzz (m/get-in fb-root [game-id :puzzle])]
+      (m/reset! puzz (.stringify js/JSON (clj->js {:id game-id}))))
+    (m/merge-in! fb-root [game-id] {:id  (name game-id)})
     (GET (str "/get-puzzle/" (name game-id))
       {:response-format :json
         :keywords? false
         :handler #(dispatch [:update-and-set-puzzle [% game-id]])})
-    (assoc db :loading? true)))
+    (assoc db :loading? true :current-game game-id)))
 
 (register-handler
   :update-and-set-puzzle
   (fn [db [_ [puzzle game-id]]]
     #_(log "UPDATE" puzzle)
-    (def puz (m/get-in fb-root [game-id :puzzle]))
     ; Try this shit out
     ; SERIALIZATION MOTHERFUCKER
     ; sorry matchbox
+    (def puz (m/get-in fb-root [game-id :puzzle]))
     (m/reset! puz (.stringify js/JSON (clj->js puzzle)))
-    (m/deref puz (fn [value]
-                     (dispatch [:set-puzzle (convert-puzzle value)])))
-                   db))
+    (m/listen-to puz :value
+                 (fn [[_ v]] #_(log v) (dispatch [:set-puzzle (convert-puzzle v)])))
+    db))
 
 (register-handler
   :set-puzzle
@@ -108,15 +111,40 @@
         (do
             (m/auth-anon fb-root (fn [err auth-data]
                                 (dispatch [:set-user (:uid auth-data)])
-                                (dispatch [:join-game game-id])))))
+                                (dispatch [:join-game game-id])
                                 ;; remove user from this game's user-list on disconnect
-                                ;(.remove (m/on-disconnect (.child fb-root (str (name game-id) "/users/" (:uid auth-data)))))))))
+                                (->> false (.set (m/on-disconnect (.child fb-root (str (name game-id) "/users/" (:uid auth-data) "/online?"))))))))))
 
     ;; update current game id
-    (merge db {:current-game game-id :loading? (nil? (:puzzle db))}))))
+    (merge db {:current-game game-id :loading? (nil? (:puzzle db)) :user-games (conj (:user-games db) game-id)})))
+
+(register-handler
+  :leave-game
+  (fn [db _]
+    (let [user (:user db)
+          current-game (:current-game db)]
+    (doseq [game (:user-games db)] (m/merge-in! fb-root [game :users (:id user)] {:online? false}))
+    (merge db {:current-game nil}))))
 
 (register-handler
   :send-move
   (fn [db [_ [square letter user]]]
     (m/merge-in! fb-root [(:current-game db) :game-state] {(marshal-square square) {:letter letter :user user}})
     db))
+
+(register-handler
+  :get-current-games
+  (fn [db _]
+      (m/listen-list fb-root (fn [games]
+                               (let [has-onlines? (fn [game] (->> game (map (fn [k v] (:online? k)))))
+                                     current-games (->> games (filter (fn [k v] (some true? (has-onlines? (vals (:users k)))))))]
+                                   (dispatch [:set-current-games current-games]))))
+
+    db))
+
+(register-handler
+  :set-current-games
+  (fn [db [_ games]]
+    (if (seq games)
+      (merge db {:current-games games})
+      (merge db {:current-games {}}))))
