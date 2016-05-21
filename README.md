@@ -36,3 +36,10 @@ You bet. Clojure/CLJS is a delight to work in -- it's not strongly typed like El
 ## Challenges
 
 This would have been easier to do in JS, my comfort zone, but that's not the point. Honestly the hardest part about this, as many CLJS newcomers might understand, was moving between Javascript and Clojure data structures. It's not a big deal when you're isolated in UI state, but once you start talking to the world at large you have to deal with JSON -- and it can get messy. Keywordize all day long. I have seen some attempts at solving this headache, most notably [transit](https://github.com/cognitect/transit-clj).
+
+## To Do
+
+* Matchmaking
+* Persistent sessions
+* Game chat
+* Versus mode
