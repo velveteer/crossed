@@ -91,13 +91,15 @@
       (if (seq (:id user))
         ;; if user has session then put them into user-list for game
         (do
-            ; check if puzzle exists, otherwise generate one
-            (m/deref-in fb-root [id :puzzle]
-                        (fn [value]
-                            (if (seq value)
-                              (dispatch [:set-puzzle (convert-puzzle value)])
-                              (dispatch [:generate-game id]))))
-            (m/merge-in! fb-root [id :users] {(:id user) user})
+          ; check if puzzle exists, otherwise generate one
+          (m/deref-in fb-root [id :puzzle]
+                      (fn [value]
+                        (if (seq value)
+                          (dispatch [:set-puzzle (convert-puzzle value)])
+                          (dispatch [:generate-game id]))))
+          (m/merge-in! fb-root [id :users] {(:id user) user})
+          ;; remove user from game on disconnect
+          (->> false (.set (m/on-disconnect (.child fb-root (str (name game-id) "/users/" (:id user) "/online?")))))
             (-> fb-root
                 (m/get-in [id :users])
                 (m/listen-to :value
@@ -112,7 +114,7 @@
             (m/auth-anon fb-root (fn [err auth-data]
                                 (dispatch [:set-user (:uid auth-data)])
                                 (dispatch [:join-game game-id])
-                                ;; remove user from this game's user-list on disconnect
+                                ;; remove user from game on disconnect
                                 (->> false (.set (m/on-disconnect (.child fb-root (str (name game-id) "/users/" (:uid auth-data) "/online?"))))))))))
 
     ;; update current game id
@@ -124,7 +126,7 @@
     (let [user (:user db)
           current-game (:current-game db)]
     (doseq [game (:user-games db)] (m/merge-in! fb-root [game :users (:id user)] {:online? false}))
-    (merge db {:current-game nil}))))
+    (merge db {:current-game nil :user-games []}))))
 
 (register-handler
   :send-move
