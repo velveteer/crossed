@@ -6,7 +6,6 @@
    :current-game nil
    :current-games {}
    :loading? nil
-   :cursor nil
    :game-state {}
    :user-list {}
    :user {
@@ -14,5 +13,4 @@
        :color-scheme "classic"
        :online? true
    }
-   :user-games []
-   :cell-position nil})
+   :user-games []})

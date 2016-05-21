@@ -10,9 +10,7 @@
 
 (defn main []
   (let [games (subscribe [:current-games])
-        current-game (subscribe [:current-game])
-        ids (reaction (map #(:id %) @games))
-        candidates (reaction (if (nil? @current-game) @ids (filter #(not= (name @current-game) %) @ids)))]
+        ids (reaction (map #(:id %) @games))]
   (fn []
     [:section
         [:div.tc.pb3 (if (count @games) [:span.f6 (str "Current Live Games: " (count @games))])]
@@ -21,6 +19,6 @@
             {:on-click (fn [] (routes/set-token! (str "/" (random-string 24))))}
               [:span "Create New Game"]]
             [:button.btn.f6.f5-ns.dib.mr3.ttu
-              {:on-click (fn [] (routes/set-token! (str "/" (name (rand-nth (seq @candidates))))))
-                :disabled (= (count @candidates) 0)}
+              { :on-click (fn [] (routes/set-token! (str "/" (name (rand-nth (seq @ids))))))
+                :disabled (= (count @games) 0)}
               [:span "Join Random Game"]]]])))
