@@ -76,20 +76,24 @@
   (let [input (.getElementById js/document "word-input")]
        (.blur input)))
 
-(defn update-cursor [square clues]
-  (let [old-cursor @cursor-atom
-        same-location (= square (:square old-cursor))
-        old-across? (:across? old-cursor)
-        flipped-across? (if same-location (not old-across?) old-across?)
-        new-across? (if (direction-allowed? (build-cursor square flipped-across?) clues)
-                      flipped-across? (not flipped-across?))
-        cell (.getBoundingClientRect (.getElementById js/document (str (:col square) (:row square))))]
-    (reset! cell-position-atom {:top (aget cell "top")
-                                :right (aget cell "right")
-                                :left (aget cell "left")
-                                :bottom (aget cell "bottom")})
-    (->> 100 (js/setTimeout (fn [] (focus-input))))
-    (reset! cursor-atom (build-cursor square new-across?))))
+(defn update-cursor
+  [square clues]
+    (let [scrollX js/window.scrollX
+          scrollY js/window.scrollY
+          old-cursor @cursor-atom
+          same-location (= square (:square old-cursor))
+          old-across? (:across? old-cursor)
+          flipped-across? (if same-location (not old-across?) old-across?)
+          new-across? (if (direction-allowed? (build-cursor square flipped-across?) clues)
+                        flipped-across? (not flipped-across?))
+          cell (.getBoundingClientRect (.getElementById js/document (str (:col square) (:row square))))]
+      (reset! cell-position-atom {:top (aget cell "top")
+                                  :right (aget cell "right")
+                                  :left (aget cell "left")
+                                  :bottom (aget cell "bottom")})
+      (reset! cursor-atom (build-cursor square new-across?))
+      (focus-input)
+      (.scrollTo js/window scrollX scrollY)))
 
 (defn valid-cursor-position? [square grid]
   (let [row (:row square)
@@ -165,7 +169,7 @@
               classes (class-list {"selected" (= square (:square cursor))
                                    "active" (square-in-word? square active-word)
                                    "correct" (square-correct? square clues game-state)})
-              click-handler #(update-cursor square clues)
+              click-handler (fn [e] (update-cursor square clues))
               styles (get-styles (get-theme (get-in game-state [(keyword (u/marshal-square square)) :user :id])))]
           [:div.cell {:id (str col-idx row-idx) :on-click click-handler :class classes :style styles}
            (when-let [letter (get-in game-state [(keyword (u/marshal-square square)) :letter])] [:span letter])

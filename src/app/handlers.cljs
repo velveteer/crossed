@@ -124,6 +124,7 @@
 
 (register-handler
   :leave-game
+  ; TODO: Remove all matchbox listeners here
   (fn [db _]
     (let [user (:user db)
           current-game (:current-game db)]
