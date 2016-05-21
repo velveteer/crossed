@@ -118,9 +118,7 @@
         (do
             (m/auth-anon fb-root (fn [err auth-data]
                                 (dispatch [:set-user (:uid auth-data)])
-                                (dispatch [:join-game game-id])
-                                ;; remove user from game on disconnect
-                                (->> false (.set (m/on-disconnect (.child fb-root (str (name game-id) "/users/" (:uid auth-data) "/online?"))))))))))
+                                (dispatch [:join-game game-id]))))))
 
     (merge db {:current-game nil :loading? (nil? (:puzzle db)) :user-games (conj (:user-games db) game-id)})))
 
