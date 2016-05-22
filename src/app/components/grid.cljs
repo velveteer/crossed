@@ -191,7 +191,8 @@
                         :top (+ (:top cell-position) js/window.scrollY) :left (+ (:left cell-position) js/window.scrollX)
                         :border "none" :outline "none"
                         :color "transparent"
-                        :width 1 :height 1}
+                        :opacity 0
+                        :width 0 :height 0}
                 :value (user-input cursor clues game-state)
                 :on-change handle-change}]
        [:div#crossword-table
