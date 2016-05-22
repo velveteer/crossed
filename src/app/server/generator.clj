@@ -6,7 +6,7 @@
 ;; Dynamically bound generator function for fetching new clues from
 ;; functions in this file.
 (def ^:dynamic *random-clue-generator* (fn [] nil))
-(def grid-size 17)
+(def grid-size 15)
 (def word-count 100)
 (def max-placement-checks 5000)
 (def start-word-min-length 5)

@@ -30,12 +30,15 @@
 (register-handler
   :set-user
   (fn [db [_ id]]
-    (assoc-in db [:user :id] id)))
+    (let [user (:user db)]
+    (.setItem js/localStorage "user" (js/JSON.stringify  (clj->js (assoc-in user [:id] id))))
+    (assoc-in db [:user :id] id))))
 
 (register-handler
   :set-colors
   (fn [db [_ color]]
       (m/merge-in! fb-root [(:current-game db) :users (:id (:user db))] {:color-scheme color})
+      (.setItem js/localStorage "user" (js/JSON.stringify  (clj->js (assoc-in (:user db) [:color-scheme] color))))
       (assoc-in db [:user :color-scheme] color)))
 
 (register-handler
@@ -142,8 +145,10 @@
 (register-handler
   :send-move
   (fn [db [_ [square letter user]]]
-    (m/merge-in! fb-root [(:current-game db) :game-state] {(marshal-square square) {:letter letter :user user}})
-    db))
+    (let [square-state {(marshal-square square) {:letter letter :user user}}]
+      (m/merge-in! fb-root [(:current-game db) :game-state] square-state)
+      ; update UI state optimistically
+      (assoc-in db [:game-state (keyword (marshal-square square))] {:letter letter :user user}))))
 
 (register-handler
   :get-current-games

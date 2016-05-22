@@ -3,5 +3,5 @@
 
 (defn main []
   (fn []
-    [:section
+    [:section.game-container
      [grid/main]]))

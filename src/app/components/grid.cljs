@@ -209,7 +209,7 @@
         id (get-clue-id clue)]
     (if clue
         [:div.clue [:p.f6 {:id id} (str clue-number ". " clue-text)]]
-        [:div.clue [:p " "]])))
+        [:div.clue [:p.f6 " "]])))
 
 (defn crossword-player []
   (let [puzzle (subscribe [:puzzle])
