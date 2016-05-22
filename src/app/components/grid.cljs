@@ -208,7 +208,7 @@
         clue-length (count (:answer clue))
         id (get-clue-id clue)]
     (if clue
-        [:div.clue [:p {:id id} (str clue-number ". " clue-text)]]
+        [:div.clue [:p.f6 {:id id} (str clue-number ". " clue-text)]]
         [:div.clue [:p " "]])))
 
 (defn crossword-player []

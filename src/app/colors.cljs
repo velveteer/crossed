@@ -15,4 +15,6 @@
      :jungle-juice (mc "#C5E31D" "#8C9942")
      :toxic (mc "#E2FF00""#6800B2")
      :you-did-what (mc "#5FFF47" "#FF0735")
+     :unholiness (mc "#FF96E1" "#7A7F7B")
+     :vaporwave (mc "#9AFFDE" "#73003E")
      })

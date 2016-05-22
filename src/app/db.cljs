@@ -13,4 +13,5 @@
        :color-scheme "classic"
        :online? true
    }
+   :pending-requests []
    :user-games []})
