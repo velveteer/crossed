@@ -200,7 +200,7 @@
         (if @loading?
           [:div.spinner]
           [:div
-            (if (puzzle-complete? puzzle game-state) [:h3.f3.tc.solved "Puzzle solved!"])
+            (if (puzzle-complete? @puzzle @game-state) [:h3.f3.tc.solved "Puzzle solved!"])
             [crossword-clue @puzzle cursor]
             [crossword-table @puzzle cursor @game-state]
             [crossword-clue @puzzle cursor]
