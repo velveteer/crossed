@@ -207,11 +207,9 @@
         clue-text (:clue clue)
         clue-length (count (:answer clue))
         id (get-clue-id clue)]
-    (if clue
-        [:div.clue [:p.f6 {:id id} (str clue-number ". " clue-text)]]
-        [:div.clue [:p.f6 " "]])))
+        [:div.clue {:style {:visibility (if clue "" "hidden")}} [:p.f6 {:id id} (str clue-number ". " clue-text)]]))
 
-(defn crossword-player []
+(defn main []
   (let [puzzle (subscribe [:puzzle])
         cursor @cursor-atom
         loading? (subscribe [:loading?])
@@ -230,7 +228,3 @@
             [crossword-clue @puzzle cursor]
             [cp/main]])
        ]))
-
-(defn main []
-  (fn []
-    [crossword-player]))

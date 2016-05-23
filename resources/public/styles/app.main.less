@@ -20,8 +20,8 @@ body {
     display: flex;
     flex-direction: column;
     flex-wrap: wrap;
-    max-width: 400px;
     height: 300px;
+    align-content: center;
 }
 
 .color-square {
@@ -29,17 +29,27 @@ body {
     border-radius: 100px;
     outline: none;
     margin: 5px;
+    font-weight: 100;
+    padding: 0 15px;
+    opacity: 0.3;
+}
+
+.color-selected {
+    font-weight: 700;
+    opacity: 1;
 }
 
 .clue {
-    display: flex;
-    justify-content: center;
-    height: 80px;
+    text-align: center;
     padding: 20px;
+    word-wrap: break-word;
 }
 
 /* Crossword */
 .game-container {
+}
+
+#crossword-table {
     display: table;
     margin: 0 auto;
 }
