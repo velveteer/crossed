@@ -11,7 +11,7 @@
                            :title label
                            :style {:color (:color scheme) :background-color (:background-color scheme) :border (str "3px solid" (:color scheme))}}
      [:span.ttu.tracked.f6.fw7
-      (if (= label selected) (gstring/unescapeEntities "&#10026;") label)]]))
+      (if (= label selected) (str (gstring/unescapeEntities "&#10026;") " " label) label)]]))
 
 (defn color-select []
   (let [user (subscribe [:user])
