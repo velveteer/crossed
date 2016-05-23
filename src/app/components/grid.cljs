@@ -113,9 +113,7 @@
                       across? (not across?))]
     (if (valid-cursor-position? new-square grid)
       (build-cursor new-square new-across?)
-      (do
-        (blur-input)
-        (build-cursor {:col -1 :row -1} false)))))
+      cursor)))
 
 (defn next-cursor [cursor puzzle]
   (let [across? (:across? cursor)
