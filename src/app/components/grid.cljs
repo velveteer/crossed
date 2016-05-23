@@ -175,8 +175,6 @@
                 :value (user-input cursor clues game-state)
                 :on-change handle-change}]
        [:div#crossword-table
-         (if (and (not (nil? puzzle)) (puzzle-complete? puzzle game-state))
-           [:h3.f2.tc.mt0 "Puzzle solved!"])
         (for [[idx row] (map-indexed vector rows)]
           ^{:key idx} [crossword-table-row idx row])]])))
 
@@ -202,6 +200,7 @@
         (if @loading?
           [:div.spinner]
           [:div
+            (if (puzzle-complete? puzzle game-state) [:h3.f3.tc.solved "Puzzle solved!"])
             [crossword-clue @puzzle cursor]
             [crossword-table @puzzle cursor @game-state]
             [crossword-clue @puzzle cursor]
