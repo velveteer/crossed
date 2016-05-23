@@ -20,7 +20,6 @@
   {:square square :across? across?})
 
 (defonce cursor-atom (r/atom (build-cursor nil true)))
-(defonce cell-position-atom (r/atom {}))
 
 (defn get-clue-id [clue]
   (str (:number clue) "-" (if (:across? clue) "across" "down")))
@@ -69,17 +68,11 @@
 (defn puzzle-complete? [puzzle game-state]
   (every? #(word-correct? % game-state) (:clues puzzle)))
 
-(defn focus-input []
-    (.focus (.getElementById js/document "word-input")))
-
-(defn blur-input []
-  (let [input (.getElementById js/document "word-input")]
-       (.blur input)))
-
 (defn update-cursor
   [square clues]
     (let [scrollX js/window.scrollX
           scrollY js/window.scrollY
+          input (.getElementById js/document "word-input")
           old-cursor @cursor-atom
           same-location (= square (:square old-cursor))
           old-across? (:across? old-cursor)
@@ -87,13 +80,9 @@
           new-across? (if (direction-allowed? (build-cursor square flipped-across?) clues)
                         flipped-across? (not flipped-across?))
           cell (.getBoundingClientRect (.getElementById js/document (str (:col square) (:row square))))]
-      (reset! cell-position-atom {:top (aget cell "top")
-                                  :right (aget cell "right")
-                                  :left (aget cell "left")
-                                  :bottom (aget cell "bottom")})
       (reset! cursor-atom (build-cursor square new-across?))
-      (focus-input)
-      (.scrollTo js/window scrollX scrollY)))
+      (.setAttribute input "style" (str "top:" (+ (aget cell "top") scrollY) "px;left:" (+ (aget cell "left") js/window.scrollX) "px;"))
+      (.focus input)))
 
 (defn valid-cursor-position? [square grid]
   (let [row (:row square)
@@ -180,17 +169,9 @@
          (for [[idx cell] (map-indexed vector cells)]
            ^{:key idx} [crossword-table-cell idx row-idx cell])]))
     (let [rows (->> (range 0 grid-size)
-                    (map #(get grid (keyword (str %)))))
-          cell-position @cell-position-atom]
+                    (map #(get grid (keyword (str %)))))]
       [:div
        [:input {:id "word-input"
-                :style {:z-index "-9999"
-                        :position "absolute"
-                        :top (+ (:top cell-position) js/window.scrollY) :left (+ (:left cell-position) js/window.scrollX)
-                        :border "none" :outline "none"
-                        :color "transparent"
-                        :opacity 0
-                        :width 0 :height 0}
                 :value (user-input cursor clues game-state)
                 :on-change handle-change}]
        [:div#crossword-table
