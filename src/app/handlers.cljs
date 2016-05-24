@@ -37,7 +37,7 @@
 (register-handler
   :set-colors
   (fn [db [_ color]]
-      (m/merge-in! fb-root [(:current-game db) :users (:id (:user db))] {:color-scheme color})
+      (m/merge-in! fb-root [:games (:current-game db) :users (:id (:user db))] {:color-scheme color})
       (.setItem js/localStorage "user" (js/JSON.stringify  (clj->js (assoc-in (:user db) [:color-scheme] color))))
       (assoc-in db [:user :color-scheme] color)))
 
@@ -57,39 +57,20 @@
 
 (register-handler
   :generate-game
-  (fn [db [_ game-id]]
+  (fn [db [_ game-id user]]
     (let [request (GET (str "/get-puzzle/" (name game-id))
                        {:response-format :json
-                        :keywords? false
-                        :handler #(dispatch [:update-and-set-puzzle [% game-id]])})]
-    ; return loading since new puzzle will take a sec
-    (assoc db :loading? true :pending-requests (conj (:pending-requests db) request)))))
+                        :handler (fn [puzzle] (dispatch [:update-and-set-game [puzzle game-id user]]))})]
+    ; track this request so we can abort it if user leaves the page while it's still generating
+    (assoc db :pending-requests (conj (:pending-requests db) request)))))
 
 (register-handler
-  :update-and-set-puzzle
-  (fn [db [_ [puzzle game-id]]]
-    (let [puz (m/get-in fb-root [game-id :puzzle])]
-      ; new game is made with id key
-      (m/merge-in! fb-root [game-id] {:id  (name game-id)})
-      ; set puzzle to JSON string of puzzle data
-      (m/reset! puz (.stringify js/JSON (clj->js puzzle)))
-      ; once puzzle is updated, listen for changes and set local state with converted puzzle data
-      (def puzzle-listener
-        (m/listen-to puz :value
-                     (fn [[_ v]] (dispatch [:set-puzzle (convert-puzzle v)])))))
-    db))
-
-(register-handler
-  :set-puzzle
-  (fn [db [_ puzzle]]
-    ; set user in game's user-list here because puzzle is available
-    ; otherwise we lose sync when users join games with puzzles still generating
-    (let [user (:user db)]
-      (if (seq puzzle)
-        (do
-          (m/merge-in! fb-root [(:id puzzle) :users] {(:id user) user})
-          (merge db {:puzzle puzzle :loading? false :current-game (:id puzzle)}))
-          (merge db {:puzzle nil :loading? false :current-game nil})))))
+  :update-and-set-game
+  (fn [db [_ [puzzle game-id user]]]
+    (let [puzzle-json (.stringify js/JSON (clj->js puzzle))]
+      ; create game -- set puzzle (JSON string in Firebase, Clojure map in local state), id, and assign current user to this game
+      (m/merge-in! fb-root [:games game-id] {:id (name game-id) :puzzle puzzle-json :users {(:id user) user}})
+      (merge db {:puzzle (convert-puzzle puzzle-json) :loading? false :current-game game-id}))))
 
 (register-handler
   :join-game
@@ -97,48 +78,48 @@
     (let [id  (keyword game-id)
           user (:user db)]
       (if (seq (:id user))
-        ; if user has session then let them set or generate a puzzle, see set-puzzle
+        ; if user has session then let them set or generate a puzzle, see update-and-set-game and generate-game
         (do
           ; check if puzzle exists, otherwise generate one
-          (m/deref-in fb-root [id :puzzle]
-                      (fn [value]
-                        (if (seq value)
-                          (dispatch [:set-puzzle (convert-puzzle value)])
-                          (dispatch [:generate-game id]))))
+          (m/deref-in fb-root [:games id :puzzle]
+                      (fn [puzzle]
+                        (if (seq puzzle)
+                          (dispatch [:update-and-set-game [(convert-puzzle puzzle) id user]])
+                          (dispatch [:generate-game id user]))))
           ; remove user from game on disconnect
-          (->> false (.set (m/on-disconnect (.child fb-root (str (name game-id) "/users/" (:id user) "/online?")))))
+          (->> false (.set (m/on-disconnect (.child fb-root (str "/games/" (name game-id) "/users/" (:id user) "/online?")))))
           ; listen for updates to this game's user list
           (def users-listener
             (-> fb-root
-              (m/get-in [id :users])
+              (m/get-in [:games id :users])
               (m/listen-to :value
                             (fn [[_ v]] #_(log v) (dispatch [:user-list-update v])))))
           ; listen for updates to the game state
           (def game-state-listener
             (-> fb-root
-              (m/get-in [id :game-state])
+              (m/get-in [:games id :game-state])
               (m/listen-to :value
                             (fn [[_ v]] #_(log v) (dispatch [:game-state-update v]))))))
 
         ;; anonymous login for anyone without a session -- sets user and then loops back to join the game
+        ; TODO: Move this elsewhere
         (do
             (m/auth-anon fb-root (fn [err auth-data]
                                 (dispatch [:set-user (:uid auth-data)])
                                 (dispatch [:join-game game-id]))))))
 
-    (merge db {:current-game nil :loading? (nil? (:puzzle db)) :user-games (conj (:user-games db) game-id)})))
+    (merge db {:loading? true :user-games (conj (:user-games db) game-id)})))
 
 (register-handler
   :leave-game
-  ; TODO: Remove all matchbox listeners here
+  ; Remove all matchbox listeners here
   (fn [db _]
-    (let [user (:user db)
+    (let [user-id (:id (:user db))
           current-game (:current-game db)
           requests (:pending-requests db)]
-    (if current-game (doseq [game (:user-games db)] (m/merge-in! fb-root [game :users (:id user)] {:online? false})))
+    (if current-game (doseq [game-id (:user-games db)] (m/merge-in! fb-root [:games game-id :users user-id] {:online? false})))
     (mr/disable-listener! users-listener)
     (mr/disable-listener! game-state-listener)
-    (mr/disable-listener! puzzle-listener)
     (doseq [r requests] (.abort r))
     (merge db {:current-game nil :user-games [] :puzzle nil}))))
 
@@ -146,14 +127,15 @@
   :send-move
   (fn [db [_ [square letter user]]]
     (let [square-state {(marshal-square square) {:letter letter :user user}}]
-      (m/merge-in! fb-root [(:current-game db) :game-state] square-state)
+      (m/merge-in! fb-root [:games (:current-game db) :game-state] square-state)
       ; update UI state optimistically
       (assoc-in db [:game-state (keyword (marshal-square square))] {:letter letter :user user}))))
 
+;; Always listening for online games
 (register-handler
   :get-current-games
   (fn [db _]
-      (m/listen-list fb-root (fn [games]
+      (m/listen-list fb-root :games (fn [games]
                                (let [has-onlines? (fn [game] (->> game (map (fn [k v] (:online? k)))))
                                      current-games (->> games (filter (fn [k v] (some true? (has-onlines? (vals (:users k)))))))]
                                    (dispatch [:set-current-games current-games]))))
