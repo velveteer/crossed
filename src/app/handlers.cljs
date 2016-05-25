@@ -74,7 +74,10 @@
           session (str (name game-id) "-" (:id user) "-" (.now js/Date))]
 
       ; create game -- set puzzle (JSON string in Firebase, Clojure map in local state), id, and assign current user to this game
-      (m/merge-in! fb-root [:games game-id] {:id (name game-id) :puzzle puzzle-json :users {(:id user) user}})
+      (m/merge-in! fb-root [:games game-id] {:id (name game-id) :puzzle puzzle-json})
+
+      ; merge user into game's user map
+      (m/merge-in! fb-root [:games game-id :users (:id user)] user)
 
       ; add session to global sessions
       (m/merge-in! fb-root [:sessions session] {:id session})
