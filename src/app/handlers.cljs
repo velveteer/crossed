@@ -20,7 +20,10 @@
 (register-handler
   :initialize-db
   (fn  [_ _]
-    db/default-db))
+    (let [user (js->clj (js/JSON.parse (.getItem js/localStorage "user")) :keywordize-keys true)]
+      (if user
+        (assoc db/default-db :user user)
+        db/default-db))))
 
 (register-handler
   :current-page
@@ -29,10 +32,10 @@
 
 (register-handler
   :set-user
-  (fn [db [_ id]]
+  (fn [db [_ user-id]]
     (let [user (:user db)]
-    (.setItem js/localStorage "user" (js/JSON.stringify  (clj->js (assoc-in user [:id] id))))
-    (assoc-in db [:user :id] id))))
+      (.setItem js/localStorage "user" (js/JSON.stringify  (clj->js (assoc-in user [:id] user-id))))
+      (assoc-in db [:user :id] user-id))))
 
 (register-handler
   :set-colors
@@ -67,10 +70,19 @@
 (register-handler
   :update-and-set-game
   (fn [db [_ [puzzle game-id user]]]
-    (let [puzzle-json (.stringify js/JSON (clj->js puzzle))]
+    (let [puzzle-json (.stringify js/JSON (clj->js puzzle))
+          session (str (name game-id) "-" (:id user) "-" (.now js/Date))]
+
       ; create game -- set puzzle (JSON string in Firebase, Clojure map in local state), id, and assign current user to this game
       (m/merge-in! fb-root [:games game-id] {:id (name game-id) :puzzle puzzle-json :users {(:id user) user}})
-      (merge db {:puzzle (convert-puzzle puzzle-json) :loading? false :current-game game-id}))))
+
+      ; add session to global sessions
+      (m/merge-in! fb-root [:sessions session] {:id session})
+
+      ; remove session on disconnect
+      (.remove (m/on-disconnect (.child fb-root (str "/sessions/" session))))
+
+      (merge db {:puzzle (convert-puzzle puzzle-json) :loading? false :current-game game-id :session session}))))
 
 (register-handler
   :join-game
@@ -78,7 +90,7 @@
     (let [id  (keyword game-id)
           user (:user db)]
       (if (seq (:id user))
-        ; if user has session then let them set or generate a puzzle, see update-and-set-game and generate-game
+        ; if user has session then let them retrieve or generate a puzzle, see update-and-set-game and generate-game
         (do
           ; check if puzzle exists, otherwise generate one
           (m/deref-in fb-root [:games id :puzzle]
@@ -86,8 +98,6 @@
                         (if (seq puzzle)
                           (dispatch [:update-and-set-game [(convert-puzzle puzzle) id user]])
                           (dispatch [:generate-game id user]))))
-          ; remove user from game on disconnect
-          (->> false (.set (m/on-disconnect (.child fb-root (str "/games/" (name game-id) "/users/" (:id user) "/online?")))))
           ; listen for updates to this game's user list
           (def users-listener
             (-> fb-root
@@ -101,14 +111,14 @@
               (m/listen-to :value
                             (fn [[_ v]] #_(log v) (dispatch [:game-state-update v]))))))
 
-        ;; anonymous login for anyone without a session -- sets user and then loops back to join the game
+        ; anonymous login for anyone without a session -- sets user and then loops back to join the game
         ; TODO: Move this elsewhere
         (do
             (m/auth-anon fb-root (fn [err auth-data]
                                 (dispatch [:set-user (:uid auth-data)])
-                                (dispatch [:join-game game-id]))))))
+                                (dispatch [:join-game game-id])))))
 
-    (merge db {:loading? true :user-games (conj (:user-games db) game-id)})))
+    (merge db {:loading? true}))))
 
 (register-handler
   :leave-game
@@ -116,12 +126,14 @@
   (fn [db _]
     (let [user-id (:id (:user db))
           current-game (:current-game db)
-          requests (:pending-requests db)]
-    (if current-game (doseq [game-id (:user-games db)] (m/merge-in! fb-root [:games game-id :users user-id] {:online? false})))
+          requests (:pending-requests db)
+          session (:session db)]
+    ; clean up, go home
+    (if session (m/dissoc-in! fb-root [:sessions (keyword session)]))
     (mr/disable-listener! users-listener)
     (mr/disable-listener! game-state-listener)
     (doseq [r requests] (.abort r))
-    (merge db {:current-game nil :user-games [] :puzzle nil}))))
+    (merge db {:current-game nil :session nil :puzzle nil}))))
 
 (register-handler
   :send-move
@@ -135,11 +147,9 @@
 (register-handler
   :get-current-games
   (fn [db _]
-      (m/listen-list fb-root :games (fn [games]
-                               (let [has-onlines? (fn [game] (->> game (map (fn [k v] (:online? k)))))
-                                     current-games (->> games (filter (fn [k v] (some true? (has-onlines? (vals (:users k)))))))]
-                                   (dispatch [:set-current-games current-games]))))
-
+    (m/listen-list fb-root :sessions (fn [sessions]
+                                       (let [current-games (set (map #(first (str/split (:id %) "-")) sessions))]
+                                         (dispatch [:set-current-games current-games]))))
     db))
 
 (register-handler
