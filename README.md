@@ -24,6 +24,6 @@ All of the crossword clues are generated using data from [https://github.com/don
 ## To Do
 
 * Matchmaking
-* Persistent sessions
+* Scoring
 * Game chat
 * Versus mode
