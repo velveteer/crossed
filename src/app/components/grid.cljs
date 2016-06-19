@@ -130,7 +130,7 @@
         cursor @cursor-atom
         clues (:clues puzzle)
         prev-word (join " " (user-input cursor clues @game-state))
-        word (.. e -target -value)
+        word (clojure.string/lower-case (.. e -target -value))
         cur-square (:square cursor)]
     (.preventDefault e)
     (if (> (count word) (count prev-word))
