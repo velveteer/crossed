@@ -161,3 +161,16 @@
     (if (seq games)
       (merge db {:current-games games})
       (merge db {:current-games {}}))))
+
+(register-handler
+  :get-all-games
+  (fn [db _]
+    (m/listen-list fb-root :games (fn [games] (dispatch [:set-all-games games])))
+    db))
+
+(register-handler
+  :set-all-games
+  (fn [db [_ games]]
+    (if (seq games)
+      (merge db {:all-games games})
+      (merge db {:all-games {}}))))

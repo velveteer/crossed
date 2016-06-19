@@ -5,6 +5,7 @@
    :puzzle nil
    :current-game nil
    :current-games {}
+   :all-games {}
    :loading? nil
    :game-state {}
    :user-list {}

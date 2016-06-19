@@ -34,3 +34,7 @@
 (register-sub
   :current-games
   (fn [db] (reaction (:current-games @db))))
+
+(register-sub
+  :all-games
+  (fn [db] (reaction (:all-games @db))))
