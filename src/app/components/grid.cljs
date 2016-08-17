@@ -7,24 +7,25 @@
             [app.colors :as c]
             [app.components.color-picker :as cp]))
 
+(defn build-cursor [square across?]
+  "Convert square into a cursor -- it knows which way it is oriented"
+  {:square square :across? across?})
+
+(defonce cursor-atom (r/atom (build-cursor nil true)))
+
 (defn class-list [classes]
+  "Utility for conditional CSS classes"
   (join " "
         (for [[class include?] classes
               :when include?]
           class)))
 
 (defn build-square [col row]
+  "Construct a map of column and row"
   {:col col :row row})
 
-(defn build-cursor [square across?]
-  {:square square :across? across?})
-
-(defonce cursor-atom (r/atom (build-cursor nil true)))
-
-(defn get-clue-id [clue]
-  (str (:number clue) "-" (if (:across? clue) "across" "down")))
-
 (defn squares-in-word [clue]
+  "Construct squares for each letter in a word"
   (let [across? (:across? clue)
         length (count (:answer clue))
         start-row (:start-row clue)
@@ -36,6 +37,7 @@
       (build-square col row))))
 
 (defn square-in-word? [square clue]
+  "Checks if a square is part of a word"
   (contains? (set (squares-in-word clue)) square))
 
 (defn words-containing-square-inner [square clues]
@@ -57,6 +59,7 @@
         (words-containing-square (:square cursor) clues)))
 
 (defn word-correct? [clue game-state]
+  "Construct a vector of letters paired with correct letters and ensure they match for the current game-state"
   (let [squares (squares-in-word clue)
         squares-with-correct-letters (map vector squares (:answer clue))]
     (every? (fn [[square correct-letter]] (= (get-in game-state [(keyword (u/marshal-square square)) :letter]) (lower-case correct-letter)))
@@ -124,6 +127,14 @@
 (defn get-styles [theme]
     (get c/colors (keyword theme)))
 
+(defn word-solved? [word game-state]
+  (let [squares (map #(get-in game-state [(keyword (u/marshal-square %))])
+                  (squares-in-word word))
+        square-keys (map #(keyword (u/marshal-square %)) (squares-in-word word))
+        letters (join "" (map #(get % :letter) squares))]
+    (if (= letters (clojure.string/lower-case (:answer word)))
+      (dispatch [:solve-word word squares square-keys]))))
+
 (defn handle-change [e]
   (let [puzzle @(subscribe [:puzzle])
         game-state (subscribe [:game-state])
@@ -134,11 +145,14 @@
         cur-square (:square cursor)]
     (.preventDefault e)
     (if (> (count word) (count prev-word))
-      (if (re-matches #"^[A-z]+$" (join "" (last word)))
+      (if (re-matches #"[a-zA-Z]" (join "" (last word)))
         (do
           (swap! cursor-atom next-cursor puzzle)
           (if (not (square-correct? (:square cursor) clues @game-state))
-            (dispatch [:send-move [cur-square (last word)]]))))
+            (do
+              (dispatch [:send-move [cur-square (last word)]])
+              (js/setTimeout (fn [] (word-solved? (selected-word cursor clues) @game-state)) 100))
+            )))
       (do
         (swap! cursor-atom prev-cursor puzzle)
         (if (not (square-correct? (:square cursor) clues @game-state))
@@ -182,9 +196,8 @@
   (let [clue (selected-word cursor (:clues puzzle))
         clue-number (:number clue)
         clue-text (:clue clue)
-        clue-length (count (:answer clue))
-        id (get-clue-id clue)]
-        [:div.clue {:style {:visibility (if clue "" "hidden")}} [:p.f6 {:id id} (str clue-number ". " clue-text)]]))
+        clue-length (count (:answer clue))]
+        [:div.clue {:style {:visibility (if clue "" "hidden")}} [:p.f6 (str clue-number ". " clue-text)]]))
 
 (defn main []
   (let [puzzle (subscribe [:puzzle])

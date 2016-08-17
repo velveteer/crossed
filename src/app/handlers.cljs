@@ -28,13 +28,12 @@
 (defonce auth (f/get-auth app))
 (defonce root (fd/get-ref database))
 (defonce games (fdr/get-child root "/games"))
+(defonce users (fdr/get-child root "/users"))
 
 (register-handler
   :init
   (fn [db _]
-    (fa/auth-changed auth
-                     (fn [user]
-                       (dispatch [:set-user user])))
+    (fa/auth-changed auth (fn [user] (dispatch [:set-user user])))
     (merge db/default-db {:loading? true, :initializing? true})))
 
 (register-handler
@@ -111,8 +110,7 @@
           game-id (name id)
           game-ref (fdr/get-child games game-id)
           game-state-ref (fdr/get-child game-ref "game-state")
-          users-ref (fdr/get-child game-ref "users")
-          refs (:refs db)]
+          users-ref (fdr/get-child game-ref "users")]
 
       (if initializing?
         (dispatch [:join-game id])
@@ -172,6 +170,22 @@
   :game-state-update
   (fn [db [_ v]]
     (assoc db :game-state v)))
+
+(register-handler
+  :solve-word
+  (fn [db [_ word squares skeys]]
+    (let [game-state (:game-state db)
+          game-state-ref (:game-state-ref db)
+          user-squares (group-by #(get % :user) (filter #(not (:solved %)) squares))
+          scores (reduce-kv #(assoc %1 %2 (count %3)) {} user-squares)
+          state (into {} (filter (fn [[k v]] (some #(= % k) skeys)) game-state))
+          new-state (reduce-kv #(assoc %1 %2 (assoc %3 :solved true)) {} state)]
+      (fdr/update! game-state-ref (clj->js new-state))
+      (doseq [[uid s] scores]
+        (fdr/transaction (fdr/get-child users (str "/" uid "/score"))
+                         (fn [score]
+                           (+ score s))))
+      db)))
 
 ; (register-handler
 ;   :get-all-games
