@@ -8,5 +8,4 @@
    :user-list {}
    :user nil
    :color-scheme "classic"
-   :pending-requests []
-   :session nil})
+   :pending-requests []})

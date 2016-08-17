@@ -101,12 +101,6 @@
                                        (keyword (.-uid user)) {:name (.-displayName user)
                                                                :color-scheme (:color-scheme db)}}))
 
-      ; add session to global sessions
-      ; (m/merge-in! fb-root [:sessions session] {:id session})
-
-      ; remove session on disconnect
-      ; (.remove (m/on-disconnect (.child fb-root (str "/sessions/" session))))
-
       (merge db {:puzzle (convert-puzzle puzzle-json) :loading? false :current-page :game}))))
 
 (register-handler
@@ -131,21 +125,19 @@
                           (dispatch [:update-and-set-game [game-ref (convert-puzzle (.-puzzle (s/val game)))]])
                           (dispatch [:generate-game game-id game-ref]))))
             ; listen for updates to the game state
-            (def state-ref
-              (fdq/on game-state-ref "value"
-                      (fn [state]
-                        (log (s/val state))
-                        (dispatch [:game-state-update (f/->cljs (s/val state))]))))
+            (fdq/on game-state-ref "value"
+                    (fn [state]
+                      #_(log (s/val state))
+                      (dispatch [:game-state-update (f/->cljs (s/val state))])))
             ; listen for updates to this game's user list
-            (def user-list-ref
-              (fdq/on users-ref "value"
+            (fdq/on users-ref "value"
                     (fn [users]
                       #_(log (s/val users))
-                      (dispatch [:user-list-update (f/->cljs (s/val users))])))))
+                      (dispatch [:user-list-update (f/->cljs (s/val users))]))))
         (dispatch [:redirect-to-login])))
 
 
-    (merge db {:loading? true :game-state-ref state-ref :users-ref user-list-ref}))))
+    (merge db {:loading? true :game-state-ref game-state-ref :users-ref users-ref}))))
 
 (register-handler
   :user-list-update
@@ -156,15 +148,15 @@
   :leave-game
   ; Remove all matchbox listeners here
   (fn [db _]
-    (let [game-state-ref (:games-ref db)
+    (let [game-state-ref (:game-state-ref db)
           users-ref (:users-ref db)
           requests (:pending-requests db)]
     ; clean up, go home
-    (if game-state-ref (fdq/off game-state-ref "value"))
-    (if users-ref (fdq/off users-ref "value"))
+    (if game-state-ref (fdq/off game-state-ref))
+    (if users-ref (fdq/off users-ref))
     (log "leaving game -- bye bye")
     (doseq [r requests] (.abort r))
-    (merge db {:current-game nil :session nil :puzzle nil}))))
+    (merge db {:user-list nil :puzzle nil}))))
 
 (register-handler
   :send-move
@@ -180,15 +172,6 @@
   :game-state-update
   (fn [db [_ v]]
     (assoc db :game-state v)))
-
-; Always listening for online games
-; (register-handler
-;   :get-current-games
-;   (fn [db _]
-;     (m/listen-list fb-root :sessions (fn [sessions]
-;                                        (let [current-games (set (map #(first (str/split (:id %) "-")) sessions))]
-;                                          (dispatch [:set-current-games current-games]))))
-;     db))
 
 ; (register-handler
 ;   :get-all-games

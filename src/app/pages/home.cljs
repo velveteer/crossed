@@ -10,7 +10,7 @@
   (apply str (repeatedly length #(char (rand-nth ascii-codes))))))
 
 (defn main []
-  (let [current-games (subscribe [:current-games])
+  (let [all-games (subscribe [:all-games])
         user (subscribe [:user])]
     (fn []
       [:section
@@ -19,7 +19,7 @@
            [:button.btn.btn--green.f6.f5-ns.dib.mr3.ttu
             {:on-click (fn [] (routes/set-token! (str "/" (random-string 24))))}
             [:span.f6 "Create New Game"]]
-           [game-list/main (seq @current-games)]]
+           [game-list/main (seq @all-games)]]
           [:div.tc.pb3
            [:button.btn.btn--blue.f6.f5-ns.dib.mr3.ttu
             {:on-click (fn [] (dispatch [:toggle-login]))}
