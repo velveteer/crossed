@@ -7,5 +7,6 @@
    :game-state {}
    :user-list {}
    :user nil
+   :scores {}
    :color-scheme "classic"
    :pending-requests []})

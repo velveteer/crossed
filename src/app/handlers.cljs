@@ -9,6 +9,7 @@
             [firebase-cljs.database.datasnapshot :as s]
             [firebase-cljs.auth :as fa]
             [firebase-cljs.auth.provider :as fap]
+            [firebase-cljs.user :as u]
             [ajax.core :refer [GET]]
             [app.colors :as c]
             [app.routes :refer [set-token!]]
@@ -59,8 +60,27 @@
 (register-handler
   :set-user
   (fn [db [_ user]]
-    (let [color-scheme (.getItem js/localStorage "color-scheme")]
+    (let [color-scheme (.getItem js/localStorage "color-scheme")
+          user-ref (fdr/get-child users (u/uid user))]
+      (fdr/update! user-ref (clj->js {:name (u/name user)}))
+      (dispatch [:get-user-score (u/uid user)])
       (merge db {:user user :loading? false :initializing? false :color-scheme color-scheme}))))
+
+(register-handler
+  :get-user-score
+  (fn [db [_ uid]]
+    (let [user-ref (fdr/get-child users uid)
+          score-ref (fdr/get-child user-ref "/score")]
+      (fdq/on score-ref "value"
+              (fn [score]
+                (dispatch [:set-user-score uid (s/val score)]))))
+    db))
+
+(register-handler
+  :set-user-score
+  (fn [db [_ uid score]]
+    (assoc-in db [:scores (keyword uid)] score)))
+
 
 (register-handler
   :redirect-to-login
@@ -160,11 +180,12 @@
   :send-move
   (fn [db [_ [square letter]]]
     (let [user (:user db)
+          square-user (if (nil? letter) nil (u/uid user))
           game-state-ref (:game-state-ref db)
-          square-state {(keyword (marshal-square square)) {:letter letter :user (if (nil? letter) nil (.-uid user))}}]
+          square-state {(keyword (marshal-square square)) {:letter letter :user square-user}}]
       (fdr/update! game-state-ref (clj->js square-state))
       ; update UI state optimistically
-      (assoc-in db [:game-state (keyword (marshal-square square))] {:letter letter :user (.-uid user)}))))
+      (assoc-in db [:game-state (keyword (marshal-square square))] {:letter letter :user square-user}))))
 
 (register-handler
   :game-state-update
