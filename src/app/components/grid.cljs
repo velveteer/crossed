@@ -66,7 +66,8 @@
   (some #(word-correct? % game-state) (words-containing-square square clues)))
 
 (defn puzzle-complete? [puzzle game-state]
-  (every? #(word-correct? % game-state) (:clues puzzle)))
+  (if (nil? puzzle) false
+    (every? #(word-correct? % game-state) (:clues puzzle))))
 
 (defn update-cursor
   [square clues]
@@ -126,7 +127,6 @@
 (defn handle-change [e]
   (let [puzzle @(subscribe [:puzzle])
         game-state (subscribe [:game-state])
-        current-user (subscribe [:user])
         cursor @cursor-atom
         clues (:clues puzzle)
         prev-word (join " " (user-input cursor clues @game-state))
@@ -138,11 +138,11 @@
         (do
           (swap! cursor-atom next-cursor puzzle)
           (if (not (square-correct? (:square cursor) clues @game-state))
-            (dispatch [:send-move [cur-square (last word) @current-user]]))))
+            (dispatch [:send-move [cur-square (last word)]]))))
       (do
         (swap! cursor-atom prev-cursor puzzle)
         (if (not (square-correct? (:square cursor) clues @game-state))
-          (dispatch [:send-move [cur-square nil nil]]))))))
+          (dispatch [:send-move [cur-square nil]]))))))
 
 (defn crossword-table [puzzle cursor game-state]
   (let [grid (:grid puzzle)
@@ -157,7 +157,7 @@
                                    "active" (square-in-word? square active-word)
                                    "correct" (square-correct? square clues game-state)})
               click-handler (fn [e] (update-cursor square clues))
-              styles (get-styles (get-theme (get-in game-state [(keyword (u/marshal-square square)) :user :id])))]
+              styles (get-styles (get-theme (get-in game-state [(keyword (u/marshal-square square)) :user])))]
           [:div.cell {:id (str col-idx row-idx) :on-click click-handler :class classes :style styles}
            (when-let [letter (get-in game-state [(keyword (u/marshal-square square)) :letter])] [:span letter])
            (if-let [number (:number cell)]
@@ -189,7 +189,6 @@
 (defn main []
   (let [puzzle (subscribe [:puzzle])
         cursor @cursor-atom
-        loading? (subscribe [:loading?])
         game-state (subscribe [:game-state])
         user-list (subscribe [:user-list])]
       [:div.crossword-player
@@ -197,12 +196,10 @@
          [:h3 "Players: "]
          (for [user (vals @user-list)]
             ^{:key user} [:p.f5 (str (:id user) " " (:color-scheme user))])]
-        (if @loading?
-          [:div.spinner]
           [:div
             (if (puzzle-complete? @puzzle @game-state) [:h3.f3.tc.solved "Puzzle solved!"])
             [crossword-clue @puzzle cursor]
             [crossword-table @puzzle cursor @game-state]
             [crossword-clue @puzzle cursor]
-            [cp/main]])
+            [cp/main]]
        ]))

@@ -10,9 +10,12 @@
 (defmethod pages :default [] [:section])
 
 (defn main []
-  (let [current-page (subscribe [:current-page])]
+  (let [current-page (subscribe [:current-page])
+        loading? (subscribe [:loading?])]
     (fn []
       [:main.mb6
-        [nav/main]
-        (pages @current-page)
-        ])))
+       [nav/main]
+      (if @loading?
+        [:div.spinner]
+        (pages @current-page))
+         ])))

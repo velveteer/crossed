@@ -31,7 +31,8 @@
                  [re-frame                      "0.7.0"]
                  [bidi                          "2.0.8"]
                  [kibu/pushy                    "0.3.6"]
-                 [matchbox                      "0.0.8-SNAPSHOT"]])
+                 [degree9/firebase-cljs         "0.31.0"]
+                 ])
 (require
  '[adzerk.boot-cljs             :refer [cljs]]
  '[adzerk.boot-cljs-repl        :refer [cljs-repl]]

@@ -28,6 +28,10 @@
   (fn [db] (reaction (:user-list @db))))
 
 (register-sub
+  :color-scheme
+  (fn [db] (reaction (:color-scheme @db))))
+
+(register-sub
   :current-game
   (fn [db] (reaction (:current-game @db))))
 

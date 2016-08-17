@@ -6,15 +6,14 @@
 
 (defn color-square [label scheme selected]
   (fn [label scheme selected]
-    [:button.color-square {:on-click (fn [] (dispatch [:set-colors label]))
+    [:button.color-square {:on-click (fn [] (dispatch [:set-color label]))
                            :title label
-                           :class (if (= label selected) "color-selected")
+                           :class (if (= (str label) selected) "color-selected")
                            :style {:color (:color scheme) :background-color (:background-color scheme) :border (str "3px solid" (:color scheme))}}
      [:span.ttu.tracked.f6 label]]))
 
 (defn color-select []
-  (let [user (subscribe [:user])
-        selected (reaction (:color-scheme @user))]
+  (let [selected (subscribe [:color-scheme])]
     (fn []
       [:div.pt3.color-select
        (doall (for [[k v] c/colors]  ^{:key k} [color-square (name k) v @selected]))
