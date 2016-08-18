@@ -203,12 +203,18 @@
   (let [puzzle (subscribe [:puzzle])
         cursor @cursor-atom
         game-state (subscribe [:game-state])
-        user-list (subscribe [:user-list])]
+        user-list (subscribe [:user-list])
+        scores (subscribe [:scores])]
       [:div.crossword-player
-        #_[:div.tc
-         [:h3 "Players: "]
-         (for [user (vals @user-list)]
-            ^{:key user} [:p.f5 (str (:id user) " " (:color-scheme user))])]
+        [:div.tc
+         [:h3.ttu.tracked.fw1.mb2 "Players: "]
+         (doall
+           (for [user (vals @user-list)]
+            ^{:key (:uid user)} [:div.dib.center.relative
+                                 [:div.w3.h3.mr3.br-100
+                                  {:style {:background (str "url(" (:image user) ")") :opacity 0.6}}]
+                                 [:div.user-list-scores {:style (get-styles (:color-scheme user))} (str (get @scores (keyword (:uid user))))]]
+            ))]
           [:div
             (if (puzzle-complete? @puzzle @game-state) [:h3.f3.tc.solved "Puzzle solved!"])
             [crossword-clue @puzzle cursor]

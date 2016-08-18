@@ -1,6 +1,7 @@
 @import "colors";
 @import "spinner";
 @import url("https://fonts.googleapis.com/css?family=Monofett");
+@import url("https://fonts.googleapis.com/css?family=Audiowide");
 
 body {
     overflow-y: scroll;
@@ -22,6 +23,9 @@ body {
     font-family: 'Monofett', cursive;
     text-transform: uppercase;
     letter-spacing: -5px;
+    &:hover {
+        background-size: 220px;
+    }
 }
 
 .color-select {
@@ -78,6 +82,19 @@ body {
 
 /* Crossword */
 .game-container {
+}
+
+.user-list-scores {
+    position: absolute;
+    padding: 0 10px;
+    border-radius: 5px;
+    font-family: 'Audiowide', cursive;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    top: 0px;
+    right: 0px;
+    transition: background-color 1s, color 2s, opacity 2s;
 }
 
 #crossword-table {

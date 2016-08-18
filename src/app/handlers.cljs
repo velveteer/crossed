@@ -60,11 +60,12 @@
 (register-handler
   :set-user
   (fn [db [_ user]]
-    (let [color-scheme (.getItem js/localStorage "color-scheme")
-          user-ref (fdr/get-child users (u/uid user))]
-      (fdr/update! user-ref (clj->js {:name (u/name user)}))
-      (dispatch [:get-user-score (u/uid user)])
-      (merge db {:user user :loading? false :initializing? false :color-scheme color-scheme}))))
+    (let [color-scheme (.getItem js/localStorage "color-scheme")]
+      (if user
+        (do
+          (fdr/update! (fdr/get-child users (u/uid user)) (clj->js {:name (u/name user)}))
+          (dispatch [:get-user-score (u/uid user)])))
+      (merge db {:user user :loading? false :initializing? false :color-scheme (if color-scheme color-scheme "classic")}))))
 
 (register-handler
   :get-user-score
@@ -73,6 +74,7 @@
           score-ref (fdr/get-child user-ref "/score")]
       (fdq/on score-ref "value"
               (fn [score]
+                #_(log (s/val score))
                 (dispatch [:set-user-score uid (s/val score)]))))
     db))
 
@@ -91,7 +93,7 @@
 (register-handler
   :set-color
   (fn [db [_ color]]
-       (let [uid (.-uid (:user db))
+       (let [uid (u/uid (:user db))
              users-ref (:users-ref db)
              user-ref (fdr/get-child users-ref uid)]
          (fdr/update! user-ref (clj->js {:color-scheme color}))
@@ -117,8 +119,11 @@
       ; create game -- set puzzle (JSON string in Firebase, Clojure map in local state) and assign current user to this game
       (fdr/update! game-ref (clj->js {:puzzle puzzle-json}))
       (fdr/update! users-ref (clj->js {
-                                       (keyword (.-uid user)) {:name (.-displayName user)
-                                                               :color-scheme (:color-scheme db)}}))
+                                       (keyword (u/uid user)) {:name (u/name user)
+                                                               :color-scheme (:color-scheme db)
+                                                               :uid (u/uid user)
+                                                               :image (u/photo-url user)
+                                                               }}))
 
       (merge db {:puzzle (convert-puzzle puzzle-json) :loading? false :current-page :game}))))
 
@@ -160,7 +165,10 @@
 (register-handler
   :user-list-update
   (fn [db [_ v]]
-    (merge db {:user-list v})))
+    (let [uid (u/uid (:user db))
+          users (filter #(not= (str uid) (name %)) (keys v))]
+    (doseq [uid users] (dispatch [:get-user-score (name uid)]))
+    (merge db {:user-list v}))))
 
 (register-handler
   :leave-game
@@ -174,7 +182,7 @@
     (if users-ref (fdq/off users-ref))
     (log "leaving game -- bye bye")
     (doseq [r requests] (.abort r))
-    (merge db {:user-list nil :puzzle nil}))))
+    (merge db {:user-list nil :puzzle nil :loading? false}))))
 
 (register-handler
   :send-move

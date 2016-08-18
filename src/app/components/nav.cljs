@@ -6,10 +6,9 @@
 
 (defn user-avatar [user score]
   (fn []
-    [:div.user-avatar.ph2
-     [:div.br-100.w3.h3.center {:style {:background (str  "url(" (.-photoURL user) ")")}}] ;:on-click (fn [] (dispatch [:toggle-login]))}]
-     [:div.mt2.ttu.tc.f6 [:span.tracked.fw6.grey "Score: "] [:span.blue @score]]
-      ]
+    [:div.user-avatar
+     [:div.br-100.w3.h3.center {:style {:background (str "url(" (.-photoURL user) ")")}}] ;:on-click (fn [] (dispatch [:toggle-login]))}]
+                                 [:div.user-list-scores {:style {:position "relative"}} (str @score)]]
       ))
 
 (defn main []
@@ -17,8 +16,8 @@
         scores (subscribe [:scores])
         my-score (reaction (if @user (get @scores (keyword (.-uid @user)) nil)))]
     (fn []
-      [:nav.pa3.pa4-ns.pb0-ns.tc
-        [:a.mw6.center.header.link.dim.dark-gray.f-subheadline.db.mb3 {:href (routes/path-for :home) :title "Leave game"} "Crossed"]
-        [:div.absolute.top-1.right-2.link.dim.black.db.mb3
+      [:nav.pa3.tc
+        [:a.mw6.center.header.link.dark-gray.f-subheadline.db.mb3 {:href (routes/path-for :home) :title "Leave game"} "Crossed"]
+        [:div
          (if @user [user-avatar @user my-score])]
         ])))
