@@ -15,7 +15,7 @@ This wouldn't have been possible without:
 * [cljs-devtools](https://github.com/binaryage/cljs-devtools) -- A must have. This is awesome!
 
 
-The crossword generation code is shamelessly pulled from Ben Denham's work here: [clj-crossword](https://github.com/ben-denham/clj-crosswords). It has been slightly tweaked but all the credit is due to him.
+The crossword generation code is shamelessly pulled from Ben Denham's work here: [clj-crosswords](https://github.com/ben-denham/clj-crosswords). It has been slightly tweaked but all the credit is due to him.
 
 All of the crossword clues are generated using data from [https://github.com/donohoe/nyt-crossword/](https://github.com/donohoe/nyt-crossword/). They aren't always reliable, but there's enough of them to consistently generate unique puzzles.
 
