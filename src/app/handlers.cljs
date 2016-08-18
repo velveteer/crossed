@@ -33,7 +33,7 @@
   :init
   (fn [db _]
     (fa/auth-changed auth (fn [user] (dispatch [:set-user user])))
-    (merge db/default-db {:loading? true, :initializing? true})))
+    (merge db/default-db {:initializing? true})))
 
 (register-handler
   :toggle-login
@@ -62,9 +62,8 @@
       (if user
         (do
           (fdr/update! (fdr/get-child users (u/uid user)) (clj->js {:name (u/name user)}))
-          (dispatch [:get-all-games])
           (dispatch [:get-user-score (u/uid user)])))
-      (merge db {:user user :loading? false :initializing? false :color-scheme (if color-scheme color-scheme "classic")}))))
+      (merge db {:user user :initializing? false :color-scheme (if color-scheme color-scheme "classic")}))))
 
 (register-handler
   :get-user-score
@@ -87,7 +86,7 @@
   :redirect-to-login
   (fn [db _]
     (set-token! "/")
-    (merge db {:loading? false})))
+    (merge db {:loading? false :initializing? false})))
 
 (register-handler
   :set-color
@@ -124,54 +123,36 @@
                                       :image (u/photo-url user)
                                       }))
 
-      (merge db {:puzzle (convert-puzzle puzzle-json) :loading? false :current-page :game}))))
+      (merge db {:puzzle (convert-puzzle puzzle-json) :loading? false}))))
 
 (register-handler
   :join-game
-  (fn [db [_ id]]
-    (let [initializing? (:initializing? db)
-          user (:user db)
-          game-id (name id)
-          game-ref (fdr/get-child games game-id)
+  (fn [db [_ game-id]]
+    (let [game-ref (fdr/get-child games game-id)
           game-state-ref (fdr/get-child game-ref "game-state")
           users-ref (fdr/get-child game-ref "users")]
 
-      (if initializing?
-        (dispatch [:join-game id])
-        (if user
-          (do
-            ; check if game exists, otherwise generate one
-            (fdq/once game-ref "value"
-                      (fn [game]
-                        (if (s/val game)
-                          (dispatch [:update-and-set-game [game-ref (convert-puzzle (.-puzzle (s/val game)))]])
-                          (dispatch [:generate-game game-id game-ref]))))
-            ; listen for updates to the game state
-            (fdq/on game-state-ref "value"
-                    (fn [state]
-                      #_(log (s/val state))
-                      (dispatch [:game-state-update (f/->cljs (s/val state))])))
-            ; listen for updates to this game's user list
-            (fdq/on users-ref "value"
-                    (fn [users]
-                      #_(log (s/val users))
-                      (dispatch [:user-list-update (f/->cljs (s/val users))]))))
-        (dispatch [:redirect-to-login])))
-
+      ; check if game exists, otherwise generate one
+      (fdq/once game-ref "value"
+                (fn [game]
+                  (if (s/val game)
+                    (dispatch [:update-and-set-game [game-ref (convert-puzzle (.-puzzle (s/val game)))]])
+                    (dispatch [:generate-game game-id game-ref]))))
+      ; listen for updates to the game state
+      (fdq/on game-state-ref "value"
+              (fn [state]
+                #_(log (s/val state))
+                (dispatch [:game-state-update (f/->cljs (s/val state))])))
+      ; listen for updates to this game's user list
+      (fdq/on users-ref "value"
+              (fn [users]
+                #_(log (s/val users))
+                (dispatch [:user-list-update (f/->cljs (s/val users))])))
 
     (merge db {:loading? true :game-state-ref game-state-ref :game-ref game-ref :users-ref users-ref}))))
 
 (register-handler
-  :user-list-update
-  (fn [db [_ v]]
-    (let [uid (u/uid (:user db))
-          users (filter #(not= (str uid) (name %)) (keys v))]
-    (doseq [uid users] (dispatch [:get-user-score (name uid)]))
-    (merge db {:user-list v}))))
-
-(register-handler
   :leave-game
-  ; Remove all matchbox listeners here
   (fn [db _]
     (let [game-state-ref (:game-state-ref db)
           users-ref (:users-ref db)
@@ -179,7 +160,6 @@
     ; clean up, go home
     (if game-state-ref (fdq/off game-state-ref))
     (if users-ref (fdq/off users-ref))
-    (log "leaving game -- bye bye")
     (doseq [r requests] (.abort r))
     (merge db {:user-list nil :puzzle nil :loading? false :game-state-ref nil :users-ref nil :game-ref nil}))))
 
@@ -193,6 +173,13 @@
       (fdr/update! game-state-ref (clj->js square-state))
       ; update UI state optimistically
       (assoc-in db [:game-state (keyword (marshal-square square))] {:letter letter :user square-user}))))
+
+(register-handler
+  :user-list-update
+  (fn [db [_ v]]
+    (let [uid (u/uid (:user db))
+          users (filter #(not= (str uid) (name %)) (keys v))]
+    (merge db {:user-list v}))))
 
 (register-handler
   :game-state-update
@@ -222,12 +209,13 @@
 (register-handler
   :get-all-games
   (fn [db _]
-      (fdq/on (fdq/take-last games 10) "value"
-            (fn [games]
-              (dispatch [:set-all-games (f/->cljs (s/val games))])))
-    (merge db {:loading? true})))
+    (let [all-games (:all-games db)]
+      (fdq/once (fdq/take-last games 10) "value"
+                (fn [games]
+                  (dispatch [:set-all-games (f/->cljs (s/val games))])))
+      (merge db {:loading-games? (not (seq all-games))}))))
 
 (register-handler
   :set-all-games
   (fn [db [_ games]]
-    (merge db {:all-games games :loading? false})))
+    (merge db {:all-games games :loading-games? false})))

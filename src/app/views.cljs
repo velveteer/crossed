@@ -11,11 +11,9 @@
 
 (defn main []
   (let [current-page (subscribe [:current-page])
-        loading? (subscribe [:loading?])]
+        initializing? (subscribe [:initializing?])]
     (fn []
-      [:main.mb6
-       [nav/main]
-      (if @loading?
-        [:div.spinner]
-        (pages @current-page))
-         ])))
+      (if (not @initializing?)
+        [:main.mb6
+         [nav/main]
+         (pages @current-page)]))))

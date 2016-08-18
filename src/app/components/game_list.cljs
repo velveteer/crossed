@@ -3,6 +3,7 @@
                    [reagent.ratom :refer [reaction]])
   (:require [app.routes :as routes]
             [app.util :refer [convert-puzzle]]
+            [reagent.core :refer [create-class]]
             [re-frame.core :refer [dispatch subscribe]]))
 
 (defn get-progress [game]
@@ -17,7 +18,7 @@
     (* 100 (/ solved-count cell-count))))
 
 (defn game-row [game]
-  (fn []
+  (fn [game]
     (let [game-id (name (key game))]
       [:div.ph3.dib
        [:p.mb0.mt4.center {:style {:width "150px" :overflow "hidden" :text-overflow "ellipsis"}} game-id]
@@ -28,12 +29,22 @@
          {:on-click (fn [] (routes/set-token! (str "/" game-id)))}
          [:span.f6 "Join Game"]]]])))
 
-(defn main [games]
-  (fn []
-    [:section.mw7.center
-     [:h2.f4.ttu.tracked.mt5.pb1.bb.bw1.b--light-gray.mw6.center.dark-gray "Open Games:"]
-     (if (seq games)
-      [:div.pb3 (for [game games] ^{:key (name (key game))} [game-row game])]
-      [:h2.f4.fw3.i "How odd, there are no games yet."])
-     ]
-    ))
+(defn main []
+  (let [all-games (subscribe [:all-games])
+        loading? (subscribe [:loading-games?])]
+    (create-class
+      {:component-did-mount
+       #(dispatch [:get-all-games])
+
+       :display-name "games-list"
+
+       :reagent-render
+       (fn []
+         (if @loading? [:div.spinner]
+           [:section.mw7.center
+            [:h2.f4.ttu.tracked.mt5.pb1.bb.bw1.b--light-gray.mw6.center.dark-gray "Open Games:"]
+            (if (seq @all-games)
+              [:div.pb3 (for [game @all-games] ^{:key (name (key game))} [game-row game])]
+              [:h2.f4.fw3.i "How odd, there are no games yet."])
+            ]))}
+         )))

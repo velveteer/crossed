@@ -8,8 +8,16 @@
   (fn [db] (reaction (:current-page @db))))
 
 (register-sub
+  :initializing?
+  (fn [db] (reaction (:initializing? @db))))
+
+(register-sub
   :loading?
   (fn [db] (reaction (:loading? @db))))
+
+(register-sub
+  :loading-games?
+  (fn [db] (reaction (:loading-games? @db))))
 
 (register-sub
   :puzzle

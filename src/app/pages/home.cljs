@@ -10,18 +10,17 @@
   (apply str (repeatedly length #(char (rand-nth ascii-codes))))))
 
 (defn main []
-  (let [all-games (subscribe [:all-games])
-        user (subscribe [:user])]
+  (let [user (subscribe [:user])]
     (fn []
       [:section
-        (if @user
-          [:div.tc.pb3
-           [:button.btn.btn--green.f6.f5-ns.dib.mr3.ttu
-            {:on-click (fn [] (routes/set-token! (str "/" (random-string 24))))}
-            [:span.f6 "Create New Game"]]
-           [game-list/main @all-games]]
-          [:div.tc.pb3
-           [:button.btn.btn--blue.f6.f5-ns.dib.mr3.ttu
-            {:on-click (fn [] (dispatch [:toggle-login]))}
-            [:span.f6 "Login with Google"]]])
-        ])))
+         (if @user
+           [:div.tc.pb3
+            [:button.btn.btn--green.f6.f5-ns.dib.mr3.ttu
+             {:on-click (fn [] (routes/set-token! (str "/" (random-string 24))))}
+             [:span.f6 "Create New Game"]]
+            [game-list/main]]
+           [:div.tc.pb3
+            [:button.btn.btn--blue.f6.f5-ns.dib.mr3.ttu
+             {:on-click (fn [] (dispatch [:toggle-login]))}
+             [:span.f6 "Login with Google"]]])
+         ])))
