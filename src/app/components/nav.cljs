@@ -6,9 +6,9 @@
 
 (defn user-avatar [user score]
   (fn []
-    [:div.user-avatar
-     [:div.br-100.w3.h3.center {:style {:background (str "url(" (.-photoURL user) ")")}}] ;:on-click (fn [] (dispatch [:toggle-login]))}]
-                                 [:div.user-list-scores {:style {:position "relative"}} (str @score)]]
+    [:div.user-avatar.mw3.center
+     [:div.br-100.w3.h3 {:style {:background (str "url(" (.-photoURL user) ")")}}] ;:on-click (fn [] (dispatch [:toggle-login]))}]
+                                 [:div.user-list-scores.blue {:style {:position "relative"}} (str @score)]]
       ))
 
 (defn main []
@@ -18,6 +18,5 @@
     (fn []
       [:nav.pa3.tc
         [:a.mw6.center.header.link.dark-gray.f-subheadline.db.mb3 {:href (routes/path-for :home) :title "Leave game"} "Crossed"]
-        [:div
-         (if @user [user-avatar @user my-score])]
+        #_(if @user [user-avatar @user my-score])
         ])))
