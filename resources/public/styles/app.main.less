@@ -3,8 +3,16 @@
 @import url("https://fonts.googleapis.com/css?family=Monofett");
 @import url("https://fonts.googleapis.com/css?family=Audiowide");
 
+html {
+    height: 100%;
+}
+
 body {
     overflow-y: scroll;
+    position: relative;
+    margin: 0;
+    padding-bottom: 6rem;
+    min-height: 100%;
 }
 
 /* Color Classes */
@@ -14,6 +22,8 @@ body {
 .grey {
     color: @grey1;
 }
+
+/* Sections */
 
 .header {
     background: url("/images/pinkx.png") center center no-repeat;
@@ -25,6 +35,27 @@ body {
     letter-spacing: -5px;
     &:hover {
         background-size: 220px;
+    }
+}
+
+.footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    padding: 0.4rem;
+    background-color: #efefef;
+    color: @blue2;
+    text-align: center;
+    text-transform: uppercase;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    .link {
+        color: #F400A6;
     }
 }
 
@@ -83,9 +114,6 @@ body {
 }
 
 /* Crossword */
-.game-container {
-}
-
 .user-list-scores {
     position: absolute;
     padding: 0 10px;

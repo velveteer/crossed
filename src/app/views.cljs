@@ -1,6 +1,7 @@
 (ns app.views
     (:require [re-frame.core :refer [subscribe]]
               [app.components.nav :as nav]
+              [app.components.footer :as footer]
               [app.pages.home :as home]
               [app.pages.game :as game]))
 
@@ -14,6 +15,9 @@
         initializing? (subscribe [:initializing?])]
     (fn []
       (if (not @initializing?)
-        [:main.mb6
+        [:main
          [nav/main]
-         (pages @current-page)]))))
+         (pages @current-page)
+         [footer/main]
+        ]
+        ))))
