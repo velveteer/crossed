@@ -188,9 +188,8 @@
 
 (register-handler
   :solve-word
-  (fn [db [_ word squares skeys]]
-    (let [game-state (:game-state db)
-          game-state-ref (:game-state-ref db)
+  (fn [db [_ word squares skeys game-state]]
+    (let [game-state-ref (:game-state-ref db)
           game-ref (:game-ref db)
           user-squares (group-by #(get % :user) (filter #(not (:solved %)) squares))
           scores (reduce-kv #(assoc %1 %2 (count %3)) {} user-squares)

@@ -133,7 +133,7 @@
         square-keys (map #(keyword (u/marshal-square %)) (squares-in-word word))
         letters (join "" (map #(get % :letter) squares))]
     (if (= letters (clojure.string/lower-case (:answer word)))
-      (dispatch [:solve-word word squares square-keys]))))
+      (dispatch [:solve-word word squares square-keys game-state]))))
 
 (defn handle-change [e]
   (let [puzzle @(subscribe [:puzzle])
@@ -151,7 +151,7 @@
           (if (not (square-correct? (:square cursor) clues @game-state))
             (do
               (dispatch [:send-move [cur-square (last word)]])
-              (js/setTimeout (fn [] (word-solved? (selected-word cursor clues) @game-state)) 100))
+              (js/setTimeout (fn [] (word-solved? (selected-word cursor clues) @game-state)) 1000))
             )))
       (do
         (swap! cursor-atom prev-cursor puzzle)
