@@ -19,7 +19,7 @@
            [:button.btn.btn--green.f6.f5-ns.dib.mr3.ttu
             {:on-click (fn [] (routes/set-token! (str "/" (random-string 24))))}
             [:span.f6 "Create New Game"]]
-           [game-list/main (seq @all-games)]]
+           [game-list/main @all-games]]
           [:div.tc.pb3
            [:button.btn.btn--blue.f6.f5-ns.dib.mr3.ttu
             {:on-click (fn [] (dispatch [:toggle-login]))}

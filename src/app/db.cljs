@@ -4,9 +4,10 @@
   {:current-page nil
    :puzzle nil
    :loading? nil
-   :game-state {}
-   :user-list {}
    :user nil
+   :user-list {}
+   :game-state {}
    :scores {}
+   :all-games {}
    :color-scheme "classic"
    :pending-requests []})

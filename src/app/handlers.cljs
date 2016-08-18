@@ -13,10 +13,8 @@
             [ajax.core :refer [GET]]
             [app.colors :as c]
             [app.routes :refer [set-token!]]
-            [app.util :refer [marshal-square]]
+            [app.util :refer [marshal-square convert-puzzle]]
             [app.db :as db]))
-
-(defn convert-puzzle [puzzle] (-> (->> puzzle (.parse js/JSON)) (js->clj :keywordize-keys true)))
 
 ;; Connection to Firebase
 (def opts { :apiKey "AIzaSyCIw_pe2ZnghxjTb4pHlTGvtUJSoCMhe_U",
@@ -64,6 +62,7 @@
       (if user
         (do
           (fdr/update! (fdr/get-child users (u/uid user)) (clj->js {:name (u/name user)}))
+          (dispatch [:get-all-games])
           (dispatch [:get-user-score (u/uid user)])))
       (merge db {:user user :loading? false :initializing? false :color-scheme (if color-scheme color-scheme "classic")}))))
 
@@ -114,16 +113,16 @@
   (fn [db [_ [game-ref puzzle]]]
     (let [user (:user db)
           users-ref (fdr/get-child game-ref "users")
+          user-ref (fdr/get-child users-ref (u/uid user))
           puzzle-json (.stringify js/JSON (clj->js puzzle))]
 
       ; create game -- set puzzle (JSON string in Firebase, Clojure map in local state) and assign current user to this game
       (fdr/update! game-ref (clj->js {:puzzle puzzle-json}))
-      (fdr/update! users-ref (clj->js {
-                                       (keyword (u/uid user)) {:name (u/name user)
-                                                               :color-scheme (:color-scheme db)
-                                                               :uid (u/uid user)
-                                                               :image (u/photo-url user)
-                                                               }}))
+      (fdr/update! user-ref (clj->js {:name (u/name user)
+                                      :color-scheme (:color-scheme db)
+                                      :uid (u/uid user)
+                                      :image (u/photo-url user)
+                                      }))
 
       (merge db {:puzzle (convert-puzzle puzzle-json) :loading? false :current-page :game}))))
 
@@ -160,7 +159,7 @@
         (dispatch [:redirect-to-login])))
 
 
-    (merge db {:loading? true :game-state-ref game-state-ref :users-ref users-ref}))))
+    (merge db {:loading? true :game-state-ref game-state-ref :game-ref game-ref :users-ref users-ref}))))
 
 (register-handler
   :user-list-update
@@ -182,7 +181,7 @@
     (if users-ref (fdq/off users-ref))
     (log "leaving game -- bye bye")
     (doseq [r requests] (.abort r))
-    (merge db {:user-list nil :puzzle nil :loading? false}))))
+    (merge db {:user-list nil :puzzle nil :loading? false :game-state-ref nil :users-ref nil :game-ref nil}))))
 
 (register-handler
   :send-move
@@ -205,26 +204,30 @@
   (fn [db [_ word squares skeys]]
     (let [game-state (:game-state db)
           game-state-ref (:game-state-ref db)
+          game-ref (:game-ref db)
           user-squares (group-by #(get % :user) (filter #(not (:solved %)) squares))
           scores (reduce-kv #(assoc %1 %2 (count %3)) {} user-squares)
           state (into {} (filter (fn [[k v]] (some #(= % k) skeys)) game-state))
           new-state (reduce-kv #(assoc %1 %2 (assoc %3 :solved true)) {} state)]
       (fdr/update! game-state-ref (clj->js new-state))
       (doseq [[uid s] scores]
+        (fdr/transaction (fdr/get-child game-ref (str "/users/" uid "/score"))
+                         (fn [score]
+                           (+ score s)))
         (fdr/transaction (fdr/get-child users (str "/" uid "/score"))
                          (fn [score]
                            (+ score s))))
       db)))
 
-; (register-handler
-;   :get-all-games
-;   (fn [db _]
-;     (m/listen-list fb-root :games (fn [games] (dispatch [:set-all-games games])))
-;     db))
+(register-handler
+  :get-all-games
+  (fn [db _]
+      (fdq/on (fdq/take-last games 10) "value"
+            (fn [games]
+              (dispatch [:set-all-games (f/->cljs (s/val games))])))
+    (merge db {:loading? true})))
 
-; (register-handler
-;   :set-all-games
-;   (fn [db [_ games]]
-;     (if (seq games)
-;       (merge db {:all-games games})
-;       (merge db {:all-games {}}))))
+(register-handler
+  :set-all-games
+  (fn [db [_ games]]
+    (merge db {:all-games games :loading? false})))

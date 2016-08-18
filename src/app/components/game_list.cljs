@@ -2,23 +2,38 @@
   (:require-macros [app.logging :refer [log]]
                    [reagent.ratom :refer [reaction]])
   (:require [app.routes :as routes]
+            [app.util :refer [convert-puzzle]]
             [re-frame.core :refer [dispatch subscribe]]))
 
-(defn game-row [game-id]
-  (fn [game-id]
-    [:div.center.mw6.ph3 {:style {:display "flex" :flex-direction "column" :align-items "center" :justify-content "space-between"}}
-     [:p.mb0.mt4.dib {:style {:width "150px" :overflow "hidden" :text-overflow "ellipsis"}}  game-id]
-     [:div
-      [:button.btn.f6.f5-ns.ttu
-        {:on-click (fn [] (routes/set-token! (str "/" game-id)))}
-      [:span.f6 "Join Game"]]]]))
+(defn get-progress [game]
+  (let [puzzle (convert-puzzle (get (val game) :puzzle))
+        solved-count (count (map (fn [[k v]] (get v :solved)) (:game-state (val game))))
+        cells (for [row (:grid puzzle)]
+                     (for [cell row]
+                       (if (not (keyword? cell))
+                         (count cell))))
+        cell-count (reduce #(+ %1 (second %2)) 0 cells)]
+
+    (* 100 (/ solved-count cell-count))))
+
+(defn game-row [game]
+  (fn []
+    (let [game-id (name (key game))]
+      [:div.ph3.dib
+       [:p.mb0.mt4.center {:style {:width "150px" :overflow "hidden" :text-overflow "ellipsis"}} game-id]
+       [:p.mb0 (str "Players: " (count (get (val game) :users)))]
+       [:p.mb0 (str "Progress: " (str (.round js/Math (get-progress game)) "%"))]
+       [:div
+        [:button.btn.f6.f5-ns.ttu
+         {:on-click (fn [] (routes/set-token! (str "/" game-id)))}
+         [:span.f6 "Join Game"]]]])))
 
 (defn main [games]
-  (fn [games]
-    [:section
-     [:h2.f4.ttu.tracked.mt5.pb1.bb.bw1.b--light-gray.mw6.center.dark-gray "Current Games:"]
+  (fn []
+    [:section.mw7.center
+     [:h2.f4.ttu.tracked.mt5.pb1.bb.bw1.b--light-gray.mw6.center.dark-gray "Open Games:"]
      (if (seq games)
-      [:div.tc.pb3 (for [game-id games] ^{:key game-id} [game-row game-id])]
-      [:h2.f4.fw3.i "Nobody is playing right now."])
+      [:div.pb3 (for [game games] ^{:key (name (key game))} [game-row game])]
+      [:h2.f4.fw3.i "How odd, there are no games yet."])
      ]
     ))
