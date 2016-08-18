@@ -4,8 +4,8 @@
  :source-paths    #{"src"}
  :resource-paths  #{"resources"}
  :dependencies '[[adzerk/boot-cljs              "1.7.228-1"       :scope "test"]
-                 [adzerk/boot-cljs-repl         "0.3.0"           :scope "test"]
-                 [adzerk/boot-reload            "0.4.7"           :scope "test"]
+                 [adzerk/boot-cljs-repl         "0.3.3"           :scope "test"]
+                 [adzerk/boot-reload            "0.4.12"          :scope "test"]
                  [pandeiro/boot-http            "0.7.3"           :scope "test"]
                  [com.cemerick/piggieback       "0.2.1"           :scope "test"]
                  [crisptrutski/boot-cljs-test   "0.2.2-SNAPSHOT"  :scope "test"]
@@ -14,7 +14,7 @@
                  [deraen/boot-less              "0.2.1"           :scope "test"]
 
                   ; Clojure
-                 [org.clojure/clojure           "1.7.0"]
+                 [org.clojure/clojure           "1.8.0"]
                  [hiccup                        "1.0.5"]
                  [environ                       "1.0.0"]
                  [compojure                     "1.1.5"]
@@ -24,7 +24,7 @@
                  [http-kit                      "2.1.18"]
 
                  ; Clojurescript
-                 [org.clojure/clojurescript     "1.7.228"]
+                 [org.clojure/clojurescript     "1.9.216"]
                  [cljs-ajax                     "0.5.4"]
                  [binaryage/devtools            "0.6.1"]
                  [reagent                       "0.6.0-alpha"]
@@ -52,7 +52,7 @@
 (deftask build-cljs []
   (comp
     (less :compression true)
-    (cljs :optimizations :advanced :compiler-options {:closure-defines {"goog.DEBUG" false}})))
+    (cljs :optimizations :whitespace :compiler-options {:closure-defines {"goog.DEBUG" false}})))
 
 (deftask build-jar []
   (comp
