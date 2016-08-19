@@ -10,9 +10,9 @@
   (let [puzzle (convert-puzzle (get (val game) :puzzle))
         solved-count (count (map (fn [[k v]] (get v :solved)) (:game-state (val game))))
         cells (for [row (:grid puzzle)]
-                     (for [cell row]
-                       (if (not (keyword? cell))
-                         (count cell))))
+                (for [cell row]
+                  (if (not (keyword? cell))
+                    (count cell))))
         cell-count (reduce #(+ %1 (second %2)) 0 cells)]
 
     (* 100 (/ solved-count cell-count))))
