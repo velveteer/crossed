@@ -24,14 +24,14 @@
                  [http-kit                      "2.1.18"]
 
                  ; Clojurescript
-                 [org.clojure/clojurescript     "1.9.216"]
+                 [org.clojure/clojurescript     "1.9.225"]
                  [cljs-ajax                     "0.5.4"]
-                 [binaryage/devtools            "0.6.1"]
+                 [binaryage/devtools            "0.8.1"]
                  [reagent                       "0.6.0-alpha"]
                  [re-frame                      "0.7.0"]
                  [bidi                          "2.0.8"]
                  [kibu/pushy                    "0.3.6"]
-                 [degree9/firebase-cljs         "0.31.0"]
+                 [degree9/firebase-cljs         "1.0.0"]
                  ])
 (require
  '[adzerk.boot-cljs             :refer [cljs]]
@@ -47,12 +47,12 @@
         (serve :reload true :port 8080 :handler 'app.server.core/app :httpkit true)
         (less)
         (reload :on-jsload 'app.core/mount-root :asset-path "public")
-        (cljs :optimizations :none :source-map true)))
+        (cljs :compiler-options {:preloads '[devtools.preload]})))
 
 (deftask build-cljs []
   (comp
     (less :compression true)
-    (cljs :optimizations :whitespace :compiler-options {:closure-defines {"goog.DEBUG" false}})))
+    (cljs :optimizations :simple)))
 
 (deftask build-jar []
   (comp

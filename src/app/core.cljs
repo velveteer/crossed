@@ -1,7 +1,6 @@
 (ns app.core
   (:require [reagent.dom :refer [render]]
             [re-frame.core :refer [dispatch-sync]]
-            [devtools.core :as devtools]
             [app.routes :as routes]
             [app.views :as views]
             [app.handlers]
@@ -14,7 +13,6 @@
   (render [views/main] (.getElementById js/document "app")))
 
 (defn ^:export init []
-  (if ^boolean goog.DEBUG (devtools/install! [:custom-formatters :sanity-hints]))
   (routes/start!)
   (dispatch-sync [:init])
   (mount-root))
