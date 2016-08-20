@@ -127,14 +127,6 @@
 (defn get-styles [theme]
     (get c/colors (keyword theme)))
 
-(defn word-solved? [word game-state]
-  (let [squares (map #(get-in game-state [(keyword (u/marshal-square %))])
-                  (squares-in-word word))
-        square-keys (map #(keyword (u/marshal-square %)) (squares-in-word word))
-        letters (join "" (map #(get % :letter) squares))]
-    (if (= letters (clojure.string/lower-case (:answer word)))
-      (dispatch [:solve-word word squares square-keys game-state]))))
-
 (defn handle-change [e]
   (let [puzzle @(subscribe [:puzzle])
         game-state (subscribe [:game-state])
@@ -150,9 +142,7 @@
           (swap! cursor-atom next-cursor puzzle)
           (if (not (square-correct? (:square cursor) clues @game-state))
             (do
-              (dispatch [:send-move [cur-square (last word)]])
-              (js/setTimeout (fn [] (word-solved? (selected-word cursor clues) @game-state)) 1000))
-            )))
+              (dispatch [:send-move [cur-square (last word) (selected-word cursor clues)]])))))
       (do
         (swap! cursor-atom prev-cursor puzzle)
         (if (not (square-correct? (:square cursor) clues @game-state))
