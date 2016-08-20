@@ -83,7 +83,7 @@
           flipped-across? (if same-location (not old-across?) old-across?)
           new-across? (if (direction-allowed? (build-cursor square flipped-across?) clues)
                         flipped-across? (not flipped-across?))
-          cell (.getBoundingClientRect (.getElementById js/document (str (:col square) (:row square))))]
+          cell (.getBoundingClientRect (.getElementById js/document (str "c" (:col square) "r" (:row square))))]
       (reset! cursor-atom (build-cursor square new-across?))
       (.setAttribute input "style" (str "top:" (+ (aget cell "top") scrollY) "px;left:" (+ (aget cell "left") js/window.scrollX) "px;"))
       (.focus input)))
@@ -153,6 +153,7 @@
         clues (:clues puzzle)
         grid-size (:grid-size puzzle)
         active-word (selected-word cursor clues)]
+
     (defn crossword-table-cell [col-idx row-idx cell]
       (if (nil? cell)
         [:div.cell.cell--empty]
@@ -162,16 +163,19 @@
                                    "correct" (square-correct? square clues game-state)})
               click-handler (fn [e] (update-cursor square clues))
               styles (get-styles (get-theme (get-in game-state [(keyword (u/marshal-square square)) :user])))]
-          [:div.cell {:id (str col-idx row-idx) :on-click click-handler :class classes :style styles}
+
+          [:div.cell {:id (str "c" col-idx "r" row-idx) :on-click click-handler :class classes :style styles}
            (when-let [letter (get-in game-state [(keyword (u/marshal-square square)) :letter])] [:span letter])
            (if-let [number (:number cell)]
              [:span.clue-number number])])))
+
     (defn crossword-table-row [row-idx row]
       (let [cells (->> (range 0 grid-size)
                        (map #(get row (keyword (str %)))))]
         [:div.row
          (for [[idx cell] (map-indexed vector cells)]
            ^{:key idx} [crossword-table-cell idx row-idx cell])]))
+
     (let [rows (->> (range 0 grid-size)
                     (map #(get grid (keyword (str %)))))]
       [:div
