@@ -7,6 +7,7 @@
             [re-frame.core :refer [dispatch subscribe]]))
 
 (defn get-progress [game]
+  "Calculate completion progress of a game"
   (let [puzzle (convert-puzzle (get (val game) :puzzle))
         solved-count (count (map (fn [[k v]] (get v :solved)) (:game-state (val game))))
         cells (for [row (:grid puzzle)]
@@ -19,25 +20,24 @@
 
 (defn game-row [game]
   (fn [game]
-    (let [game-id (name (key game))]
-      [:div.ph3.dib
-       [:p.mb0.mt4.center {:style {:width "150px" :overflow "hidden" :text-overflow "ellipsis"}} game-id]
-       [:p.mb0 (str "Players: " (count (get (val game) :users)))]
-       [:p.mb0 (str "Progress: " (str (.round js/Math (get-progress game)) "%"))]
-       [:div
-        [:button.btn.f6.f5-ns.ttu
-         {:on-click (fn [] (routes/set-token! (str "/" game-id)))}
-         [:span.f6 "Join Game"]]]])))
+    (let [game-id (name (key game))
+          progress (.round js/Math (get-progress game))]
+      (when (not= progress 100)
+        [:div.ph3.dib
+         [:p.mb0.mt4.center {:style {:width "150px" :overflow "hidden" :text-overflow "ellipsis"}} game-id]
+         [:p.mb0 (str "Players: " (count (get (val game) :users)))]
+         [:p.mb0 (str "Progress: " progress  "%")]
+         [:div
+          [:button.btn.f6.f5-ns.ttu
+           {:on-click (fn [] (routes/set-token! (str "/" game-id)))}
+           [:span.f6 "Join Game"]]]]))))
 
 (defn main []
   (let [all-games (subscribe [:all-games])
         loading? (subscribe [:loading-games?])]
     (create-class
-      {:component-did-mount
-       #(dispatch [:get-all-games])
-
+      {:component-did-mount #(dispatch [:get-all-games])
        :display-name "games-list"
-
        :reagent-render
        (fn []
          (if @loading? [:div.spinner]

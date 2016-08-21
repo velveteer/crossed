@@ -10,17 +10,10 @@
         user (subscribe [:user])
         game-id (second (clojure.string/split (r/get-token) "/"))]
     (create-class
-      {:component-did-mount
-       #(dispatch [:join-game game-id])
-
-       :component-will-mount
-       #(if (not @user) (dispatch [:redirect-to-login]))
-
-       :component-will-unmount
-       #(dispatch [:leave-game])
-
+      {:component-did-mount #(dispatch [:join-game game-id])
+       :component-will-mount #(if (not @user) (dispatch [:redirect-to-login]))
+       :component-will-unmount #(dispatch [:leave-game])
        :display-name "game-page"
-
        :reagent-render
        (fn []
          [:section.game-container

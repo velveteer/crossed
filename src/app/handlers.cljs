@@ -17,15 +17,28 @@
             [app.util :refer [marshal-square unmarshal-square convert-puzzle get-squares]]
             [app.db :as db]))
 
-;; Connection to Firebase
-(def opts { :apiKey "AIzaSyCIw_pe2ZnghxjTb4pHlTGvtUJSoCMhe_U",
-            :authDomain "project-1130682223484791178.firebaseapp.com",
-            :databaseURL "https://project-1130682223484791178.firebaseio.com",
-            :storageBucket "project-1130682223484791178.appspot.com" })
+;; options for Firebase app
+(def opts {:apiKey "AIzaSyCIw_pe2ZnghxjTb4pHlTGvtUJSoCMhe_U",
+           :authDomain "project-1130682223484791178.firebaseapp.com",
+           :databaseURL "https://project-1130682223484791178.firebaseio.com",
+           :storageBucket "project-1130682223484791178.appspot.com" })
 
+;; initialize Firebase app
+;; https://firebase.google.com/docs/reference/js/firebase#.initializeApp
+;; https://degree9.github.io/firebase-cljs/firebase-cljs.core.html#var-init
 (defonce app (f/init opts))
+
+;; get database for app
+;; https://firebase.google.com/docs/reference/js/firebase.database#database
+;; https://degree9.github.io/firebase-cljs/firebase-cljs.core.html#var-get-db
 (defonce database (f/get-db app))
+
+;; get auth object for app
+;; https://firebase.google.com/docs/reference/js/firebase.auth#auth
+;; https://degree9.github.io/firebase-cljs/firebase-cljs.core.html#var-get-auth
 (defonce auth (f/get-auth app))
+
+; set up refs to top level namespaces
 (defonce root (fd/get-ref database))
 (defonce games (fdr/get-child root "/games"))
 (defonce users (fdr/get-child root "/users"))
@@ -34,6 +47,7 @@
   :init
   (fn [db _]
     (fa/auth-changed auth (fn [user] (dispatch [:set-user user])))
+    ;; see app.views -- components will not mount until initializing? is false
     (merge db/default-db {:initializing? true})))
 
 (register-handler
@@ -47,7 +61,6 @@
             (fa/login-popup auth provider))
           (do
             (fa/logout auth)
-            (dispatch [:set-user nil])
             (dispatch [:redirect-to-login])))
       db)))
 
@@ -60,11 +73,19 @@
   :set-user
   (fn [db [_ user]]
     (let [color-scheme (.getItem js/localStorage "color-scheme")]
-      (if user
-        (do
-          (fdr/update! (fdr/get-child users (u/uid user)) (clj->js {:name (u/name user)}))
-          (dispatch [:get-user-score (u/uid user)])))
-      (merge db {:user user :initializing? false :color-scheme (if color-scheme color-scheme "classic")}))))
+
+      (when user
+        ;; update global users
+        (fdr/update!
+          (fdr/get-child users (u/uid user))
+          (clj->js {:name (u/name user)}))
+
+        ;; fetch the total score for this user
+        (dispatch [:get-user-score (u/uid user)]))
+
+      (merge db {:user user
+                 :initializing? false
+                 :color-scheme (if color-scheme color-scheme "classic")}))))
 
 (register-handler
   :get-user-score
@@ -73,7 +94,6 @@
           score-ref (fdr/get-child user-ref "/score")]
       (fdq/on score-ref "value"
               (fn [score]
-                #_(log (s/val score))
                 (dispatch [:set-user-score uid (s/val score)]))))
     db))
 
@@ -82,12 +102,12 @@
   (fn [db [_ uid score]]
     (assoc-in db [:scores (keyword uid)] score)))
 
-
 (register-handler
   :redirect-to-login
   (fn [db _]
+    ;; reset loading states, reset user, and take us back home
     (set-token! "/")
-    (merge db {:loading? false :initializing? false})))
+    (merge db {:loading? false :initializing? false :user nil})))
 
 (register-handler
   :set-color
@@ -95,6 +115,7 @@
        (let [uid (u/uid (:user db))
              users-ref (:users-ref db)
              user-ref (fdr/get-child users-ref uid)]
+         ;; each user can pick their own color, which we will store in local storage
          (fdr/update! user-ref (clj->js {:color-scheme color}))
          (.setItem js/localStorage "color-scheme" color)
          (merge db {:color-scheme color}))))
@@ -105,7 +126,7 @@
     (let [request (GET (str "/get-puzzle/" game-id)
                        {:response-format :json
                         :handler (fn [puzzle] (dispatch [:update-and-set-game [game-ref puzzle]]))})]
-    ; track this request so we can abort it if user leaves the page while it's still generating
+    ;; track this request so we can abort it if user leaves the page while it's still generating
     (assoc db :pending-requests (conj (:pending-requests db) request)))))
 
 (register-handler
@@ -116,8 +137,10 @@
           user-ref (fdr/get-child users-ref (u/uid user))
           puzzle-json (.stringify js/JSON (clj->js puzzle))]
 
-      ; create game -- set puzzle (JSON string in Firebase, Clojure map in local state) and assign current user to this game
+      ;; update game puzzle -- JSON string in Firebase, hash map in local state
       (fdr/update! game-ref (clj->js {:puzzle puzzle-json}))
+
+      ;; update the user in this game's user-list
       (fdr/update! user-ref (clj->js {:name (u/name user)
                                       :color-scheme (:color-scheme db)
                                       :uid (u/uid user)
@@ -133,24 +156,27 @@
           game-state-ref (fdr/get-child game-ref "game-state")
           users-ref (fdr/get-child game-ref "users")]
 
-      ; check if game exists, otherwise generate one
+      ;; check if game exists, otherwise generate one
       (fdq/once game-ref "value"
                 (fn [game]
                   (if (s/val game)
                     (dispatch [:update-and-set-game [game-ref (convert-puzzle (aget (s/val game) "puzzle"))]])
                     (dispatch [:generate-game game-id game-ref]))))
-      ; listen for updates to the game state
+
+      ;; listen for updates to the game state
       (fdq/on game-state-ref "value"
               (fn [state]
-                #_(log (s/val state))
                 (dispatch [:game-state-update (f/->cljs (s/val state))])))
-      ; listen for updates to this game's user list
+
+      ;; listen for updates to this game's user list
       (fdq/on users-ref "value"
               (fn [users]
-                #_(log (s/val users))
                 (dispatch [:user-list-update (f/->cljs (s/val users))])))
 
-    (merge db {:loading? true :game-state-ref game-state-ref :game-ref game-ref :users-ref users-ref}))))
+      (merge db {:loading? true
+                 :game-state-ref game-state-ref
+                 :game-ref game-ref
+                 :users-ref users-ref}))))
 
 (register-handler
   :leave-game
@@ -158,11 +184,20 @@
     (let [game-state-ref (:game-state-ref db)
           users-ref (:users-ref db)
           requests (:pending-requests db)]
-    ; clean up, go home
+
+    ;; remove ref listeners
     (if game-state-ref (fdq/off game-state-ref))
     (if users-ref (fdq/off users-ref))
+
+    ;; abort any pending requests
     (doseq [r requests] (.abort r))
-    (merge db {:user-list nil :puzzle nil :loading? false :game-state-ref nil :users-ref nil :game-ref nil}))))
+
+    (merge db {:user-list nil
+               :puzzle nil
+               :loading? false
+               :game-state-ref nil
+               :users-ref nil
+               :game-ref nil}))))
 
 (register-handler
   :send-move
@@ -175,8 +210,13 @@
           prev-state (:game-state db)
           next-state (assoc prev-state (keyword (marshal-square square)) {:letter letter :user square-user})
           solved-squares (filter #(square-correct? % clues next-state) (map #(unmarshal-square %) (keys next-state)))]
+
+      ;; update game state with new square (letter and user who entered it)
       (fdr/update! game-state-ref (clj->js square-state))
+
+      ;; calculate any scores from solved squares
       (when (seq solved-squares) (dispatch [:solve-squares (get-squares solved-squares next-state)]))
+
       (merge db {:game-state next-state}))))
 
 (register-handler
@@ -187,24 +227,22 @@
           user-squares (group-by #(get % :user) (filter #(not (:solved %)) (vals squares)))
           scores (reduce-kv #(assoc %1 %2 (count %3)) {} user-squares)
           new-squares (reduce-kv #(assoc %1 %2 (assoc %3 :solved true)) {} squares)]
-      ; update game state -- mark each letter in word as solved
+
+      ;; mark each letter in word as solved
+      ;; this is so we don't count letters more than once
       (fdr/update! game-state-ref (clj->js new-squares))
-      ; update scores
+
+      ;; update scores -- game score and user's total score (two different refs))
       (doseq [[uid s] scores]
-        (fdr/transaction (fdr/get-child game-ref (str "/users/" uid "/score"))
-                         (fn [score]
-                           (+ score s)))
-        (fdr/transaction (fdr/get-child users (str "/" uid "/score"))
-                         (fn [score]
-                           (+ score s ))))
+        (fdr/transaction (fdr/get-child game-ref (str "/users/" uid "/score")) #(+ % s))
+        (fdr/transaction (fdr/get-child users (str "/" uid "/score")) #(+ % s)))
+
       db)))
 
 (register-handler
   :user-list-update
   (fn [db [_ v]]
-    (let [uid (u/uid (:user db))
-          users (filter #(not= (str uid) (name %)) (keys v))]
-    (merge db {:user-list v}))))
+    (merge db {:user-list v})))
 
 (register-handler
   :game-state-update
