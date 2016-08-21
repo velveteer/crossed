@@ -221,10 +221,10 @@
     [:div.clue {:style {:visibility (if clue "" "hidden")}} [:p.f6 (str clue-number ". " clue-text)]]))
 
 (defn user-list [users]
-  [:div.tc
+  [:div.tc.center.mw6
    [:h3.ttu.tracked.fw1.mb2 "Players: "]
    (for [user users] ^{:key (:uid user)}
-     [:div.dib.center.relative
+     [:div.dib.relative.mb3
       [:div.w3.h3.mr3.br-100 {:style {:background (str "url(" (:image user) ")") :opacity 0.6}}]
       [:div.user-list-scores {:style (get-styles (:color-scheme user))} (str (:score user))]])])
 
