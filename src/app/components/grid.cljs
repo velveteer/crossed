@@ -142,7 +142,7 @@
           (swap! cursor-atom next-cursor puzzle)
           (if (not (square-correct? (:square cursor) clues @game-state))
             (do
-              (dispatch [:send-move [cur-square (last word) (selected-word cursor clues)]])))))
+              (dispatch [:send-move [cur-square (last word) (words-containing-square cur-square clues)]])))))
       (do
         (swap! cursor-atom prev-cursor puzzle)
         (if (not (square-correct? (:square cursor) clues @game-state))

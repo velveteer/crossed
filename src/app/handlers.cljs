@@ -11,10 +11,10 @@
             [firebase-cljs.auth.provider :as fap]
             [firebase-cljs.user :as u]
             [ajax.core :refer [GET]]
-            [app.components.grid :refer [squares-in-word]]
+            [app.components.grid :refer [squares-in-word square-correct?]]
             [app.colors :as c]
             [app.routes :refer [set-token!]]
-            [app.util :refer [marshal-square convert-puzzle]]
+            [app.util :refer [marshal-square unmarshal-square convert-puzzle get-squares]]
             [app.db :as db]))
 
 ;; Connection to Firebase
@@ -137,7 +137,7 @@
       (fdq/once game-ref "value"
                 (fn [game]
                   (if (s/val game)
-                    (dispatch [:update-and-set-game [game-ref (convert-puzzle (.-puzzle (s/val game)))]])
+                    (dispatch [:update-and-set-game [game-ref (convert-puzzle (aget (s/val game) "puzzle"))]])
                     (dispatch [:generate-game game-id game-ref]))))
       ; listen for updates to the game state
       (fdq/on game-state-ref "value"
@@ -164,28 +164,23 @@
     (doseq [r requests] (.abort r))
     (merge db {:user-list nil :puzzle nil :loading? false :game-state-ref nil :users-ref nil :game-ref nil}))))
 
-(defn word-solved? [word game-state]
-  (let [siw (map #(keyword (marshal-square %)) (squares-in-word word))
-        squares (reduce #(assoc %1 %2 (get game-state %2)) {} siw)
-        letters (clojure.string/join "" (map #(get % :letter) (vals squares)))]
-    (when (= letters (clojure.string/lower-case (:answer word)))
-      (dispatch [:solve-word squares]))))
-
 (register-handler
   :send-move
-  (fn [db [_ [square letter word]]]
-    (let [user (:user db)
+  (fn [db [_ [square letter]]]
+    (let [clues  (get-in db [:puzzle :clues])
+          user (:user db)
           square-user (if (nil? letter) nil (u/uid user))
           game-state-ref (:game-state-ref db)
           square-state {(keyword (marshal-square square)) {:letter letter :user square-user}}
-          new-state (assoc-in db [:game-state (keyword (marshal-square square))] {:letter letter :user square-user})]
+          prev-state (:game-state db)
+          next-state (assoc prev-state (keyword (marshal-square square)) {:letter letter :user square-user})
+          solved-squares (filter #(square-correct? % clues next-state) (map #(unmarshal-square %) (keys next-state)))]
       (fdr/update! game-state-ref (clj->js square-state))
-      (when word (word-solved? word (:game-state new-state)))
-      ; update UI state optimistically
-      new-state)))
+      (when (seq solved-squares) (dispatch [:solve-squares (get-squares solved-squares next-state)]))
+      (merge db {:game-state next-state}))))
 
 (register-handler
-  :solve-word
+  :solve-squares
   (fn [db [_ squares]]
     (let [game-state-ref (:game-state-ref db)
           game-ref (:game-ref db)
@@ -201,7 +196,7 @@
                            (+ score s)))
         (fdr/transaction (fdr/get-child users (str "/" uid "/score"))
                          (fn [score]
-                           (+ score s))))
+                           (+ score s ))))
       db)))
 
 (register-handler

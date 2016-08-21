@@ -52,7 +52,7 @@
 (deftask build-cljs []
   (comp
     (less :compression true)
-    (cljs :optimizations :simple)))
+    (cljs :optimizations :advanced)))
 
 (deftask build-jar []
   (comp
