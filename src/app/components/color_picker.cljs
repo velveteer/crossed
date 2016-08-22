@@ -6,7 +6,7 @@
 
 (defn color-square [label scheme selected]
   (fn [label scheme selected]
-    [:button.color-square {:on-click (fn [] (dispatch [:set-color label]))
+    [:button.color-square.grow {:on-click (fn [] (dispatch [:set-color label]))
                            :title label
                            :class (if (= (str label) selected) "color-selected")
                            :style {:color (:color scheme) :background-color (:background-color scheme) :border (str "3px solid" (:color scheme))}}
