@@ -9,13 +9,14 @@
 (defn get-progress [game]
   "Calculate completion progress of a game"
   (let [puzzle (convert-puzzle (get (val game) :puzzle))
-        solved-count (count (map (fn [[k v]] (get v :solved)) (:game-state (val game))))
+        solved-count (count (filter (fn [[k v]] (get v :solved)) (:game-state (val game))))
         cells (for [row (:grid puzzle)]
                 (for [cell row]
                   (if (not (keyword? cell))
                     (count cell))))
         cell-count (reduce #(+ %1 (second %2)) 0 cells)]
 
+    (log "solved count: " solved-count)
     (* 100 (/ solved-count cell-count))))
 
 (defn game-row [game]
