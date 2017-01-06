@@ -2,9 +2,9 @@
 
 Crossed is a multiplayer crossword game made with [Clojure](http://clojure.org/) and [Firebase](https://firebase.google.com/).
 
-[See it in action here!](http://crossed.lol)
-
 Works best on recent versions of Chrome for desktop and mobile.
+
+Currently in the process of migrating to another host -- so no live demo at the moment.
 
 ## Technologies
 
