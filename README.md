@@ -1,4 +1,4 @@
-#Crossed
+# Crossed
 
 Crossed is a multiplayer crossword game made with [Clojure](http://clojure.org/) and [Firebase](https://firebase.google.com/).
 
