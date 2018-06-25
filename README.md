@@ -4,7 +4,7 @@ Crossed is a multiplayer crossword game made with [Clojure](http://clojure.org/)
 
 Works best on recent versions of Chrome for desktop and mobile.
 
-[**Live demo**](http://crossed.lol)
+[**Live demo**](http://162.243.91.70)
 
 ## Technologies
 
